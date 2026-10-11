@@ -213,6 +213,10 @@ For manual hardware verification, list devices, select each intended input/outpu
 - [ ] Add more effect processors.
 - [ ] Idk? learn a guitar finally.
 
+## Contributing
+
+Bug reports, feature suggestions, documentation improvements, and code contributions are welcome. See [Contributing](CONTRIBUTING.md) for setup and pull request guidelines, and follow our [Code of Conduct](CODE_OF_CONDUCT.md) when participating.
+
 ## Disclosure
 
 I **do** use AI in my projects. Don't make a fuss about it, every single developer in .Net business space that wants to have a job does. However, I **do not** vibe-code, aka promt 'create me a software that generates me a million bucks'. And I highly condemn those who refuse to learn from their projects
