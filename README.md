@@ -10,12 +10,6 @@ And have you found out that more complex solutions, while delivering a good tech
 
 Well, I for sure did. That's why I decided to build a piece of software that is: free (forever), open-source and simple as a rock.
 
----
-
-**DISCLOSURE**: I **do** use AI in my projects. Don't make a fuss about it, every single developer in .Net business space that wants to have a job does. However, I **do not** vibe-code, aka 'create me a software that generates me a million bucks'. And I highly condemn those who refuse to learn from their projects
-
-IMO, problem decomposition is still, and will be, essential skill in programming, therefore, any PR that is an obviuous AI slop will be closed.
-
 # SharpAmp
 
 A small Windows/.NET 10 audio router built on NAudio 2.2.1, with an extensible float DSP chain.
@@ -153,3 +147,9 @@ var overdriveChain = new ProcessorChain(
 The xUnit suite uses simulated audio devices and checks DSP order, clipping, reverb decay/reset/channel isolation, PCM conversion, resampling, channel mapping, queue boundaries, lifecycle, and fault cleanup. It never opens physical audio devices. CLI help and enumeration can be checked without starting a stream.
 
 For manual hardware verification, list devices, select each intended input/output combination, and run a short session with `--seconds 10` at low output volume. Check mono/stereo routing, ASIO channel offsets, Ctrl+C shutdown, and device disconnect handling. Hardware compatibility and audible latency require testing with the actual drivers; automated tests do not establish them.
+
+## Disclosure
+
+I **do** use AI in my projects. Don't make a fuss about it, every single developer in .Net business space that wants to have a job does. However, I **do not** vibe-code, aka 'create me a software that generates me a million bucks'. And I highly condemn those who refuse to learn from their projects
+
+IMO, problem decomposition is still, and will be, essential skill in programming, therefore, any PR that is an obviuous AI slop will be closed.
