@@ -11,7 +11,7 @@ internal static class CommandLine
     private static readonly HashSet<string> ValueOptions = new(StringComparer.Ordinal)
     {
         "--input", "--output", "--rate", "--input-channels", "--output-channels",
-        "--input-offset", "--output-offset", "--latency", "--buffer", "--drive", "--wet", "--seconds"
+        "--input-offset", "--output-offset", "--latency", "--buffer", "--drive", "--wet", "--seconds", "--chain"
     };
 
     public static CliCommand Parse(string[] args)
@@ -29,6 +29,14 @@ internal static class CommandLine
         var values = ReadOptions(args);
         if (kind == CommandKind.List && values.Count != 0)
             throw new ArgumentException("The list command takes no options.");
+
+        if (values.TryGetValue("--chain", out var chainPath))
+        {
+            if (string.IsNullOrWhiteSpace(chainPath))
+                throw new ArgumentException("--chain must be a file path.");
+            if (values.ContainsKey("--drive") || values.ContainsKey("--wet") || values.ContainsKey("--bypass"))
+                throw new ArgumentException("--chain cannot be combined with --drive, --wet, or --bypass.");
+        }
 
         var options = BindOptions(values);
         if (values.ContainsKey("--seconds") && options.Seconds <= 0)
@@ -77,6 +85,7 @@ internal static class CommandLine
             Drive = bypass ? defaults.Drive : ReadFloat(values, "--drive") ?? defaults.Drive,
             Wet = bypass ? defaults.Wet : ReadFloat(values, "--wet") ?? defaults.Wet,
             Bypass = bypass,
+            ChainPath = values.GetValueOrDefault("--chain"),
             Seconds = ReadInt(values, "--seconds") ?? defaults.Seconds
         };
     }

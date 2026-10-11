@@ -103,6 +103,54 @@ Capture is converted to interleaved 32-bit float and resampled to `SampleRate` b
 
 `LatencyMilliseconds` is a request, not an end-to-end guarantee. ASIO uses its driver's configured buffer size. The capture queue capacity is separate from output latency: it does not deliberately accumulate a full buffer before playback. Underflow emits silence; overflow drops whole incoming packets and increments `DroppedInputFrames`. Independent devices can have different clock rates even at the same nominal sample rate. This simple wrapper uses fixed-rate resampling, not adaptive clock synchronization, so long-running routes between unrelated devices can experience occasional drops or silence. Use a single duplex ASIO device when low latency and a shared clock matter.
 
+## Save and load processor chains
+
+Save a preset as JSON and select it when starting the CLI:
+
+```powershell
+dotnet run --project SharpAmp.Cli -- run --chain presets/overdrive-room.json
+dotnet run --project SharpAmp.Cli -- run --input 0 --output 1 --chain "C:\My presets\clean.json"
+```
+
+`--chain` accepts a local file path and cannot be combined with `--drive`, `--wet`, or `--bypass`. Without it, the CLI still uses the demo chain. Files are read once at session creation; select another file on the next run to change chains.
+
+```json
+{
+  "processors": [
+    { "type": "hardOverdrive", "parameters": { "drive": 7, "outputGain": 0.35 } },
+    { "type": "reverb", "parameters": { "wet": 0.2, "feedback": 0.7, "damping": 0.3 } }
+  ]
+}
+```
+
+Processors run in array order, and the same effect may appear multiple times. `processors` and each effect's `type` are required. `parameters` is an optional dictionary of numeric values; missing keys use the defaults below. `{"processors":[]}` provides bypass.
+
+| Type | Parameters (default; range) |
+| --- | --- |
+| `hardOverdrive` | `drive` (5; > 0), `outputGain` (0.35; 0..1) |
+| `distortion` | `drive` (3; > 0), `outputGain` (0.35; 0..1) |
+| `reverb` | `wet` (0.2; 0..1), `feedback` (0.7; >= 0 and < 1), `damping` (0.3; >= 0 and < 1) |
+
+All names are case-sensitive and all values must be finite JSON numbers. Unknown effects, unknown properties or parameters, duplicate keys, null objects, and out-of-range settings are rejected. JSON syntax/schema errors throw `JsonException`; invalid effect settings throw `ArgumentException` with the processor index and parameter where applicable. Custom processors remain available through the existing constructor; JSON supports the built-in types listed above.
+
+Library callers can load a JSON string directly or edit and serialize the configuration models:
+
+```csharp
+using SharpAmp.Core.Dsp;
+using SharpAmp.Core.Dsp.Configuration;
+
+var json = File.ReadAllText("presets/overdrive-room.json");
+var chain = ProcessorChain.FromJson(json);
+// Pass chain to AudioSession, or call Initialize before processing samples directly.
+
+var preset = ProcessorChainConfiguration.FromJson(json);
+preset.Processors[0].Parameters["drive"] = 3;
+File.WriteAllText("my-chain.json", preset.ToJson());
+var anotherChain = ProcessorChain.FromConfiguration(preset);
+```
+
+Each build creates independent processor instances with a snapshot of the settings. Editing the model does not change an existing chain. Presets store configuration only; reverb history and audio format are initialized for each stream.
+
 ## Add a DSP class
 
 Implement `IDigitalSignalProcessor` and place it in a `ProcessorChain`:

@@ -20,6 +20,7 @@ internal sealed record RunOptions
     public float Drive { get; init; } = DefaultDrive;
     public float Wet { get; init; } = DefaultWet;
     public bool Bypass { get; init; }
+    public string? ChainPath { get; init; }
     public int Seconds { get; init; }
 
     public AudioSessionOptions CreateSessionOptions(AudioDevice input, AudioDevice output) => new(input, output)
@@ -34,5 +35,7 @@ internal sealed record RunOptions
     };
 
     public ProcessorChain CreateProcessorChain() =>
-        Bypass ? new ProcessorChain() : DemoProcessorChain.Create(Drive, Wet);
+        Bypass ? new ProcessorChain() : ChainPath is not null
+            ? ProcessorChain.FromJson(File.ReadAllText(ChainPath))
+            : DemoProcessorChain.Create(Drive, Wet);
 }

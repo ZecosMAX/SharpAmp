@@ -8,6 +8,7 @@ internal static class HelpText
         dotnet run --project SharpAmp.Cli -- list
         dotnet run --project SharpAmp.Cli -- run
         dotnet run --project SharpAmp.Cli -- run --input 0 --output 1 --drive 3 --wet 0.2
+        dotnet run --project SharpAmp.Cli -- run --chain presets/overdrive-room.json
 
         list                 List input/output device indices separately.
         run                  Select devices interactively, or use the indices from list.
@@ -22,6 +23,7 @@ internal static class HelpText
         --buffer N           Capture queue capacity in ms (default 250; >= 2 * latency).
         --drive N            Overdrive drive, positive (default {{RunOptions.DefaultDrive}}).
         --wet N              Reverb wet mix, 0..1 (default 0.2).
+        --chain PATH         Load a JSON chain (cannot combine with --drive, --wet, --bypass).
         --bypass             Use an empty DSP chain.
         --seconds N          Stop automatically after N seconds; otherwise Ctrl+C stops.
 

@@ -1,3 +1,5 @@
+using SharpAmp.Core.Dsp.Configuration;
+
 namespace SharpAmp.Core.Dsp;
 
 /// <summary>Runs a fixed sequence in declaration order; use on one audio thread at a time.</summary>
@@ -5,6 +7,19 @@ public sealed class ProcessorChain : IDigitalSignalProcessor
 {
     private readonly IDigitalSignalProcessor[] processors;
     private int channels;
+
+    /// <summary>Create a fresh, uninitialized chain from a JSON preset.</summary>
+    public static ProcessorChain FromJson(string json) =>
+        FromConfiguration(ProcessorChainConfiguration.FromJson(json));
+
+    /// <summary>Snapshot a preset into independent processors; initialize before processing.</summary>
+    public static ProcessorChain FromConfiguration(ProcessorChainConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        if (configuration.Processors is null)
+            throw new ArgumentException("processors must be an array.", nameof(configuration));
+        return new ProcessorChain(configuration.Processors.Select(ProcessorFactory.Create).ToArray());
+    }
 
     public ProcessorChain(params IDigitalSignalProcessor[] processors)
     {

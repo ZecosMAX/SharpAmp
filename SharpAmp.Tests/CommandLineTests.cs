@@ -98,6 +98,36 @@ public sealed class CommandLineTests
     [Fact]
     public void RecognizesList() => Assert.Equal(CommandKind.List, CommandLine.Parse(["list"]).Kind);
 
+    [Fact]
+    public void LoadsChainFromLocalFile()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(path, """{"processors":[{"type":"distortion","parameters":{"drive":2,"outputGain":0.5}}]}""");
+            var options = CommandLine.Parse(["run", "--chain", path]).Options;
+            Assert.Equal(path, options.ChainPath);
+            var chain = options.CreateProcessorChain();
+            chain.Initialize(48000, 1);
+            float[] samples = [0.2f];
+            chain.Process(samples);
+            Assert.Equal(MathF.Tanh(0.4f) * 0.5f, samples[0]);
+
+            File.WriteAllText(path, "invalid json");
+            Assert.Throws<System.Text.Json.JsonException>(() => options.CreateProcessorChain());
+            File.Delete(path);
+            Assert.Throws<FileNotFoundException>(() => options.CreateProcessorChain());
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void RejectsEmptyChainPath() =>
+        Assert.Throws<ArgumentException>(() => CommandLine.Parse(["run", "--chain", " "]));
+
     [Theory]
     [InlineData("other", "Use 'list'")]
     [InlineData("list --bypass", "takes no options")]
@@ -111,6 +141,11 @@ public sealed class CommandLineTests
     [InlineData("run --wet invalid", "--wet must be a number")]
     [InlineData("run --seconds 0", "--seconds must be positive")]
     [InlineData("run --seconds -1", "--seconds must be positive")]
+    [InlineData("run --chain", "Missing value for --chain")]
+    [InlineData("run --chain a.json --chain b.json", "Duplicate option --chain")]
+    [InlineData("run --chain a.json --drive 2", "--chain cannot be combined")]
+    [InlineData("run --chain a.json --wet 0.1", "--chain cannot be combined")]
+    [InlineData("run --chain a.json --bypass", "--chain cannot be combined")]
     public void RejectsInvalidArgumentsWithOptionContext(string arguments, string message)
     {
         var error = Assert.Throws<ArgumentException>(() => CommandLine.Parse(arguments.Split(' ')));
