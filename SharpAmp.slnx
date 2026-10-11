@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SharpAmp.Core/SharpAmp.Core.csproj" />
+  <Project Path="SharpAmp.Cli/SharpAmp.Cli.csproj" />
+  <Project Path="SharpAmp.Tests/SharpAmp.Tests.csproj" />
+</Solution>
