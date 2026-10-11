@@ -1,3 +1,21 @@
+# Introduction
+
+Have you ever tried to find a very simple (and i.e. fast) guitar amp simulator, so that you could plug your guitar into your PC, and play alongside songsterr; or similar projects?
+
+And have you found out that even simplest of those require you to ***purchase*** that software, even for $0.0, making you create an account, share your personal information, only to find out that software requires internet connection to work (??)
+
+<sub>*looking at you two: GR7, amplitron*</sub>
+
+And have you found out that more complex solutions, while delivering a good techincal basis and good UI, for some unknown reason just refuse to work with ASIO and output anywhere else?
+
+That's why I decided to build a piece of software that is: free (forever), open-source, simple as a rock.
+
+---
+
+**DISCLOSURE**: I **do** use AI in my projects. Don't make a fuss about it, every single developer in .Net business space that wants to have a job does. However, I **do not** vibe-code, aka 'create me a software that generates me a million bucks'. And I highly condemn those who refuse to learn from their projects
+
+IMO, problem decomposition is still, and will be, essential skill in programming, therefore, any PR that is an obviuous AI slop will be closed.
+
 # SharpAmp
 
 A small Windows/.NET 10 audio router built on NAudio 2.2.1, with an extensible float DSP chain.
