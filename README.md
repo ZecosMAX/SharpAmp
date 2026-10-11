@@ -114,6 +114,16 @@ dotnet run --project SharpAmp.Cli -- run --input 0 --output 1 --chain "C:\My pre
 
 `--chain` accepts a local file path and cannot be combined with `--drive`, `--wet`, or `--bypass`. Without it, the CLI still uses the demo chain. Files are read once at session creation; select another file on the next run to change chains.
 
+At startup, the CLI prints the active effects in processing order, including all effective settings (even defaults omitted from the preset):
+
+```text
+Processor chain (in processing order):
+  1. Hard overdrive — drive: 7, output gain: 0.35
+  2. Reverb — wet mix: 0.2, feedback: 0.7, damping: 0.3
+```
+
+An empty chain or `--bypass` prints `Processor chain: bypass (no effects)`.
+
 ```json
 {
   "processors": [

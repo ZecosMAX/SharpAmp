@@ -7,7 +7,8 @@ internal sealed class SessionRunner(TextWriter writer)
 {
     public void Run(AudioSessionOptions sessionOptions, RunOptions options)
     {
-        using var session = new AudioSession(sessionOptions, options.CreateProcessorChain());
+        var chain = options.CreateProcessorChain();
+        using var session = new AudioSession(sessionOptions, chain);
         using var stop = new ManualResetEventSlim();
         ConsoleCancelEventHandler cancel = (_, e) =>
         {
@@ -20,6 +21,7 @@ internal sealed class SessionRunner(TextWriter writer)
         {
             writer.WriteLine($"{sessionOptions.Input.Name} → {sessionOptions.Output.Name}");
             writer.WriteLine($"Capture: {session.InputFormat}; DSP: {session.ProcessingFormat}");
+            ProcessorChainDisplay.Write(writer, chain);
             writer.WriteLine("Use headphones and low output volume. Press Ctrl+C to stop.");
 
             session.Start();

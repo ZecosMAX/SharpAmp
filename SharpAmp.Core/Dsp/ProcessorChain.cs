@@ -8,6 +8,9 @@ public sealed class ProcessorChain : IDigitalSignalProcessor
     private readonly IDigitalSignalProcessor[] processors;
     private int channels;
 
+    /// <summary>The processors in execution order. Chain membership cannot be changed.</summary>
+    public IReadOnlyList<IDigitalSignalProcessor> Processors { get; }
+
     /// <summary>Create a fresh, uninitialized chain from a JSON preset.</summary>
     public static ProcessorChain FromJson(string json) =>
         FromConfiguration(ProcessorChainConfiguration.FromJson(json));
@@ -27,6 +30,7 @@ public sealed class ProcessorChain : IDigitalSignalProcessor
         if (processors.Any(p => p is null))
             throw new ArgumentException("Processors must not contain null.", nameof(processors));
         this.processors = (IDigitalSignalProcessor[])processors.Clone();
+        Processors = Array.AsReadOnly(this.processors);
     }
 
     public void Initialize(int sampleRate, int channels)
