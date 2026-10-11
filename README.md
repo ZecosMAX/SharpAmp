@@ -206,8 +206,15 @@ The xUnit suite uses simulated audio devices and checks DSP order, clipping, rev
 
 For manual hardware verification, list devices, select each intended input/output combination, and run a short session with `--seconds 10` at low output volume. Check mono/stereo routing, ASIO channel offsets, Ctrl+C shutdown, and device disconnect handling. Hardware compatibility and audible latency require testing with the actual drivers; automated tests do not establish them.
 
+## Current milestones
+
+[] Create a UI project in Avalonia with configurable processors.
+[] Add VST plugins support.
+[] Add more effect processors.
+[] Idk? learn a guitar finally.
+
 ## Disclosure
 
-I **do** use AI in my projects. Don't make a fuss about it, every single developer in .Net business space that wants to have a job does. However, I **do not** vibe-code, aka 'create me a software that generates me a million bucks'. And I highly condemn those who refuse to learn from their projects
+I **do** use AI in my projects. Don't make a fuss about it, every single developer in .Net business space that wants to have a job does. However, I **do not** vibe-code, aka promt 'create me a software that generates me a million bucks'. And I highly condemn those who refuse to learn from their projects
 
 IMO, problem decomposition is still, and will be, essential skill in programming, therefore, any PR that is an obviuous AI slop will be closed.
