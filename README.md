@@ -8,7 +8,7 @@ And have you found out that even simplest of those require you to ***purchase***
 
 And have you found out that more complex solutions, while delivering a good techincal basis and good UI, for some unknown reason just refuse to work with ASIO and output anywhere else?
 
-That's why I decided to build a piece of software that is: free (forever), open-source, simple as a rock.
+That's why I decided to build a piece of software that is: free (forever), open-source and simple as a rock.
 
 ---
 
