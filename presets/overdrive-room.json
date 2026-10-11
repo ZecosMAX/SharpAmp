@@ -2,11 +2,11 @@
   "processors": [
     {
       "type": "hardOverdrive",
-      "parameters": { "drive": 10, "outputGain": 0.25 }
+      "parameters": { "drive": 7, "outputGain": 0.35 }
     },
     {
       "type": "reverb",
-      "parameters": { "wet": 0.5, "feedback": 0.7, "damping": 0.3 }
+      "parameters": { "wet": 0.2, "feedback": 0.7, "damping": 0.3 }
     }
   ]
 }
