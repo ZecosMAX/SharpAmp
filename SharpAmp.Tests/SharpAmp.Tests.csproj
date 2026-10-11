@@ -13,5 +13,6 @@
     <ProjectReference Include="../SharpAmp.Core/SharpAmp.Core.csproj" />
     <ProjectReference Include="../SharpAmp.Cli/SharpAmp.Cli.csproj" />
     <Using Include="Xunit" />
+    <None Include="../presets/*.json" Link="presets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

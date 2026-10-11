@@ -23,7 +23,7 @@ The solution contains three projects:
 
 | Project | Purpose |
 | --- | --- |
-| `SharpAmp.Core` | Device enumeration, audio sessions, DSP interface, distortion, hard overdrive, reverb, and demo chain |
+| `SharpAmp.Core` | Device enumeration, audio sessions, DSP interface, gain, drive, delay, modulation, lo-fi effects, reverb, and demo chain |
 | `SharpAmp.Cli` | Device selection and live processing from the terminal |
 | `SharpAmp.Tests` | Hardware-independent xUnit tests for DSP, sample conversion, and session lifecycle |
 
@@ -137,9 +137,16 @@ Processors run in array order, and the same effect may appear multiple times. `p
 
 | Type | Parameters (default; range) |
 | --- | --- |
+| `gain` | `gain` (1; >= 0, linear amplitude multiplier) |
 | `hardOverdrive` | `drive` (5; > 0), `outputGain` (0.35; 0..1) |
-| `distortion` | `drive` (3; > 0), `outputGain` (0.35; 0..1) |
+| `distortion` | `drive` (3; > 0), `outputGain` (0.35; 0..1), `wet` (1; 0..1) |
 | `reverb` | `wet` (0.2; 0..1), `feedback` (0.7; >= 0 and < 1), `damping` (0.3; >= 0 and < 1) |
+| `delay` | `timeMs` (300; 1..2000), `feedback` (0.35; >= 0 and < 1), `wet` (0.25; 0..1) |
+| `tapeDelay` | `timeMs` (350; 1..2000), `feedback` (0.4; >= 0 and < 1), `wet` (0.25; 0..1), `toneHz` (3000; 20..20000), `wowDepthMs` (2; 0..10), `wowRateHz` (0.5; 0..10) |
+| `tremolo` | `rateHz` (4; 0..20), `depth` (0.5; 0..1) |
+| `bitcrusher` | `bits` (8; integer 2..16), `downsample` (4; integer 1..64), `wet` (1; 0..1) |
+| `octaveFuzz` | `drive` (5; > 0), `outputGain` (0.35; 0..1), `wet` (1; 0..1) |
+| `ringModulator` | `frequencyHz` (440; 0..20000), `wet` (0.5; 0..1) |
 
 All names are case-sensitive and all values must be finite JSON numbers. Unknown effects, unknown properties or parameters, duplicate keys, null objects, and out-of-range settings are rejected. JSON syntax/schema errors throw `JsonException`; invalid effect settings throw `ArgumentException` with the processor index and parameter where applicable. Custom processors remain available through the existing constructor; JSON supports the built-in types listed above.
 
@@ -161,6 +168,38 @@ var anotherChain = ProcessorChain.FromConfiguration(preset);
 
 Each build creates independent processor instances with a snapshot of the settings. Editing the model does not change an existing chain. Presets store configuration only; reverb history and audio format are initialized for each stream.
 
+### Basic guitar and bass presets
+
+The `presets` directory includes six starting points. Quote paths containing parentheses in PowerShell:
+
+```powershell
+dotnet run --project SharpAmp.Cli -- run --chain "presets/guitar_(clean).json"
+dotnet run --project SharpAmp.Cli -- run --chain "presets/bass_(distorted).json"
+```
+
+| Preset | Chain and intended sound |
+| --- | --- |
+| `guitar_(clean).json` | Unity gain → light room reverb; clean rhythm or arpeggios. |
+| `guitar_(distorted).json` | Gain → soft distortion → subtle tape echo → room reverb; moderate rock crunch. |
+| `guitar_(heavy).json` | Gain → hard overdrive → very light room reverb; strong clipping with little ambience. |
+| `bass_(clean).json` | Unity gain; uncolored direct bass. |
+| `bass_(distorted).json` | Gain → soft distortion, 45% wet; grit blended with the clean signal. |
+| `bass_(heavy).json` | Gain → stronger soft distortion, 70% wet; aggressive drive with some clean definition. |
+
+These are original, conservative starting settings, not amp models or measured artist tones. Adjust the first `gain` for pickup/interface level; adjust distortion `outputGain` for listening level. Clean presets start at unity to avoid clipping a hot input. Bass presets omit delay/reverb and retain a dry blend in the driven sounds, an approach also used by the [BOSS ODB-3](https://www.boss.info/us/products/odb-3/). Conventional bass rigs often include compression and EQ, as illustrated by [Fender's Downtown Express](https://www.fender.com/products/downtown-express-bass-multi-effect-pedal); those processors are not implemented here. No cabinet simulation is included, so direct distorted tones can remain bright.
+
+### New processor behavior
+
+- **Gain:** `gain: 1` is unity, `2` is approximately +6 dB, and `0` mutes. It does not clip or add coloration. Put it before distortion to control drive, or after effects to control output level; the final audio output still clips to `[-1, 1]`.
+- **Delay:** independent echoes per channel, rounded to the nearest sample with a one-sample minimum. Feedback sets repeat decay. Like the existing reverb, the wet path is scaled by `1 - feedback` to keep sustained bounded input from accumulating extra wet gain; increasing feedback also makes the first repeat quieter.
+- **Tape delay:** a simple tape-inspired effect with soft saturation in the feedback loop, a one-pole low-pass filter, and interpolated sinusoidal delay modulation. `toneHz` controls repeat brightness; `wowDepthMs: 0` disables wobble. Modulated delay is clamped to at least one sample; the tone cutoff is capped at 45% of the processing sample rate. The dry path stays untouched, and wet gain uses the same normalization as delay. This is not a model of a particular tape machine.
+- **Tremolo:** sine-shaped volume modulation from `1 - depth` to `1`, starting at full volume. `depth: 0` or `rateHz: 0` leaves volume unchanged. All channels share the modulation phase.
+- **Bitcrusher:** signed PCM-style quantization with sample-and-hold rate reduction. `downsample: 4` captures every fourth frame, independently per channel. The wet input is clipped to `[-1, 1]` before quantization; at `bits: 8`, the positive limit is `127/128`. No anti-alias filtering is applied, deliberately retaining the rough digital sound.
+- **Octave fuzz:** rectified soft clipping followed by a 20 Hz DC blocker, giving an octave-up character on single notes. It is not a polyphonic pitch shifter. `wet` blends the octave effect with the input; `outputGain` scales the resulting blend.
+- **Ring modulator:** multiplies the input by a bipolar sine carrier. `wet: 1` gives the full metallic effect; `frequencyHz: 0` makes the wet path silent. All channels share carrier phase. High carrier frequencies can alias, particularly at low sample rates.
+
+`distortion` now also accepts `wet` to blend clean and clipped signal before `outputGain`; its default of `1` preserves existing presets. All new processors keep state across variable-size blocks, clear history/phase on reset or initialization, and allocate their buffers during initialization rather than processing. Nonlinear effects use simple, non-oversampled algorithms.
+
 ## Add a DSP class
 
 Implement `IDigitalSignalProcessor` and place it in a `ProcessorChain`:
@@ -171,18 +210,19 @@ Effect implementations live in `SharpAmp.Core/Dsp/Processors`, under the `SharpA
 using SharpAmp.Core.Dsp;
 using SharpAmp.Core.Dsp.Processors;
 
-public sealed class GainProcessor(float gain) : IDigitalSignalProcessor
+public sealed class PolarityProcessor : IDigitalSignalProcessor
 {
     public void Initialize(int sampleRate, int channels) { }
     public void Process(Span<float> samples)
     {
         for (var i = 0; i < samples.Length; i++)
-            samples[i] *= gain;
+            samples[i] = -samples[i];
     }
     public void Reset() { }
 }
 
 var chain = new ProcessorChain(
+    new PolarityProcessor(),
     new GainProcessor(0.5f),
     new DistortionProcessor(drive: 3, outputGain: 0.35f),
     new ReverbProcessor(wet: 0.2f, feedback: 0.7f, damping: 0.3f));

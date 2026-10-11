@@ -9,6 +9,7 @@ internal static class HelpText
         dotnet run --project SharpAmp.Cli -- run
         dotnet run --project SharpAmp.Cli -- run --input 0 --output 1 --drive 3 --wet 0.2
         dotnet run --project SharpAmp.Cli -- run --chain presets/overdrive-room.json
+        dotnet run --project SharpAmp.Cli -- run --chain "presets/guitar_(clean).json"
 
         list                 List input/output device indices separately.
         run                  Select devices interactively, or use the indices from list.

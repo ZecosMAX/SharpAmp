@@ -29,12 +29,26 @@ public sealed class ProcessorConfigurationTests
     [InlineData("hardOverdrive")]
     [InlineData("distortion")]
     [InlineData("reverb")]
+    [InlineData("gain")]
+    [InlineData("delay")]
+    [InlineData("tapeDelay")]
+    [InlineData("tremolo")]
+    [InlineData("bitcrusher")]
+    [InlineData("octaveFuzz")]
+    [InlineData("ringModulator")]
     public void OmittedParametersUseConstructorDefaults(string type)
     {
         IDigitalSignalProcessor expected = type switch
         {
             "hardOverdrive" => new HardOverdriveProcessor(),
             "distortion" => new DistortionProcessor(),
+            "gain" => new GainProcessor(),
+            "delay" => new DelayProcessor(),
+            "tapeDelay" => new TapeDelayProcessor(),
+            "tremolo" => new TremoloProcessor(),
+            "bitcrusher" => new BitcrusherProcessor(),
+            "octaveFuzz" => new OctaveFuzzProcessor(),
+            "ringModulator" => new RingModulatorProcessor(),
             _ => new ReverbProcessor()
         };
         AssertEquivalent(expected, ProcessorChain.FromJson($$"""{"processors":[{"type":"{{type}}"}]}"""));
@@ -137,7 +151,7 @@ public sealed class ProcessorConfigurationTests
     {
         expected.Initialize(48000, 2);
         actual.Initialize(48000, 2);
-        var input = new float[16000];
+        var input = new float[48000];
         input[0] = 0.8f;
         input[9] = -0.4f;
         var output = (float[])input.Clone();

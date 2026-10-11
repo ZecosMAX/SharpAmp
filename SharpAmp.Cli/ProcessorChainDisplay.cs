@@ -20,10 +20,23 @@ internal static class ProcessorChainDisplay
 
     private static string Describe(IDigitalSignalProcessor processor) => processor switch
     {
+        GainProcessor effect => FormattableString.Invariant($"Gain — gain: {effect.Gain}"),
         HardOverdriveProcessor effect => FormattableString.Invariant(
             $"Hard overdrive — drive: {effect.Drive}, output gain: {effect.OutputGain}"),
         DistortionProcessor effect => FormattableString.Invariant(
-            $"Distortion — drive: {effect.Drive}, output gain: {effect.OutputGain}"),
+            $"Distortion — drive: {effect.Drive}, output gain: {effect.OutputGain}, wet mix: {effect.Wet}"),
+        DelayProcessor effect => FormattableString.Invariant(
+            $"Delay — time ms: {effect.TimeMs}, feedback: {effect.Feedback}, wet mix: {effect.Wet}"),
+        TapeDelayProcessor effect => FormattableString.Invariant(
+            $"Tape delay — time ms: {effect.TimeMs}, feedback: {effect.Feedback}, wet mix: {effect.Wet}, tone Hz: {effect.ToneHz}, wow depth ms: {effect.WowDepthMs}, wow rate Hz: {effect.WowRateHz}"),
+        TremoloProcessor effect => FormattableString.Invariant(
+            $"Tremolo — rate Hz: {effect.RateHz}, depth: {effect.Depth}"),
+        BitcrusherProcessor effect => FormattableString.Invariant(
+            $"Bitcrusher — bits: {effect.Bits}, downsample: {effect.Downsample}, wet mix: {effect.Wet}"),
+        OctaveFuzzProcessor effect => FormattableString.Invariant(
+            $"Octave fuzz — drive: {effect.Drive}, output gain: {effect.OutputGain}, wet mix: {effect.Wet}"),
+        RingModulatorProcessor effect => FormattableString.Invariant(
+            $"Ring modulator — frequency Hz: {effect.FrequencyHz}, wet mix: {effect.Wet}"),
         ReverbProcessor effect => FormattableString.Invariant(
             $"Reverb — wet mix: {effect.Wet}, feedback: {effect.Feedback}, damping: {effect.Damping}"),
         _ => processor.GetType().Name
