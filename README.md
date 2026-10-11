@@ -208,10 +208,10 @@ For manual hardware verification, list devices, select each intended input/outpu
 
 ## Current milestones
 
-[] Create a UI project in Avalonia with configurable processors.
-[] Add VST plugins support.
-[] Add more effect processors.
-[] Idk? learn a guitar finally.
+- [ ] Create a UI project in Avalonia with configurable processors.
+- [ ] Add VST plugins support.
+- [ ] Add more effect processors.
+- [ ] Idk? learn a guitar finally.
 
 ## Disclosure
 
