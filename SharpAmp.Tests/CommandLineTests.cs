@@ -18,22 +18,15 @@ public sealed class CommandLineTests
     }
 
     [Fact]
-    public void RunDefaultsPreserveInteractiveSelectionAndCurrentEffectSettings()
+    public void RunWithPresetPreservesInteractiveSelectionAndAudioDefaults()
     {
-        var command = CommandLine.Parse(["run"]);
+        var command = CommandLine.Parse(["run", "--chain", "my preset.json"]);
         Assert.Equal(CommandKind.Run, command.Kind);
         Assert.Null(command.Options.InputIndex);
         Assert.Null(command.Options.OutputIndex);
         Assert.Equal(48000, command.Options.SampleRate);
-        Assert.Equal(7, command.Options.Drive);
-        Assert.Equal(0.2f, command.Options.Wet);
+        Assert.Equal("my preset.json", command.Options.ChainPath);
         Assert.Equal(0, command.Options.Seconds);
-
-        var chain = command.Options.CreateProcessorChain();
-        chain.Initialize(48000, 1);
-        float[] samples = [0.1f];
-        chain.Process(samples);
-        Assert.Equal(0.196f, samples[0], 6);
     }
 
     [Fact]
@@ -43,14 +36,12 @@ public sealed class CommandLineTests
             "run", "--input", "2", "--output", "3", "--rate", "44100",
             "--input-channels", "2", "--output-channels", "4", "--input-offset", "1",
             "--output-offset", "2", "--latency", "25", "--buffer", "150",
-            "--drive", "4.5", "--wet", "0.3", "--seconds", "10"]);
+            "--chain", "preset.json", "--seconds", "10"]);
         var options = command.Options;
         Assert.Equal(2, options.InputIndex);
         Assert.Equal(3, options.OutputIndex);
-        Assert.Equal(4.5f, options.Drive);
-        Assert.Equal(0.3f, options.Wet);
+        Assert.Equal("preset.json", options.ChainPath);
         Assert.Equal(10, options.Seconds);
-        Assert.False(options.Bypass);
 
         var input = new AudioDevice(AudioBackend.Asio, AudioDirection.Input, "driver", "Input");
         var output = new AudioDevice(AudioBackend.Asio, AudioDirection.Output, "driver", "Output");
@@ -73,9 +64,9 @@ public sealed class CommandLineTests
         try
         {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("ru-RU");
-            var command = CommandLine.Parse(["run", "--drive", "2.5", "--wet", "0.125"]);
-            Assert.Equal(2.5f, command.Options.Drive);
-            Assert.Equal(0.125f, command.Options.Wet);
+            var command = CommandLine.Parse(["run", "--chain", "preset.json", "--rate", "44100", "--latency", "25"]);
+            Assert.Equal(44100, command.Options.SampleRate);
+            Assert.Equal(25, command.Options.LatencyMilliseconds);
         }
         finally
         {
@@ -84,16 +75,62 @@ public sealed class CommandLineTests
     }
 
     [Fact]
-    public void BypassDoesNotEvaluateUnusedEffectValues()
+    public void EmptyJsonPresetProvidesBypass()
     {
-        var command = CommandLine.Parse(["run", "--bypass", "--drive", "unused", "--wet", "unused"]);
-        Assert.True(command.Options.Bypass);
+        var path = Path.Combine(AppContext.BaseDirectory, "Docs", "Examples", "bypass.json");
+        var command = CommandLine.Parse(["run", "--chain", path]);
         var chain = command.Options.CreateProcessorChain();
+        Assert.Empty(chain.Processors);
         chain.Initialize(48000, 2);
         float[] samples = [0.75f, -0.25f];
         chain.Process(samples);
         Assert.Equal(new float[] { 0.75f, -0.25f }, samples);
     }
+
+    [Fact]
+    public void BypassNeedsNoPresetAndPreservesAudioOptions()
+    {
+        var options = CommandLine.Parse(["run", "--bypass", "--input", "2", "--output", "3",
+            "--rate", "44100", "--seconds", "10"]).Options;
+        Assert.True(options.Bypass);
+        Assert.Null(options.ChainPath);
+        Assert.Equal(2, options.InputIndex);
+        Assert.Equal(3, options.OutputIndex);
+        Assert.Equal(44100, options.SampleRate);
+        Assert.Equal(10, options.Seconds);
+        var chain = options.CreateProcessorChain();
+        Assert.Empty(chain.Processors);
+        chain.Initialize(44100, 2);
+        float[] samples = [0.75f, -0.25f];
+        chain.Process(samples);
+        Assert.Equal(new float[] { 0.75f, -0.25f }, samples);
+    }
+
+    [Theory]
+    [InlineData("invalid json")]
+    [InlineData("{\"processors\":[{\"type\":\"unknown\"}]}")]
+    [InlineData("{\"processors\":[{\"type\":\"gain\",\"parameters\":{\"gain\":0}}]}")]
+    public void BypassOverridesPresetWithoutLoadingItInEitherArgumentOrder(string json)
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(path, json);
+            // Exclusive access also proves that bypass does not attempt to read the file.
+            using (var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                Assert.Empty(CommandLine.Parse(["run", "--bypass", "--chain", path]).Options.CreateProcessorChain().Processors);
+                Assert.Empty(CommandLine.Parse(["run", "--chain", path, "--bypass"]).Options.CreateProcessorChain().Processors);
+            }
+            File.Delete(path);
+            Assert.Empty(CommandLine.Parse(["run", "--chain", path, "--bypass"]).Options.CreateProcessorChain().Processors);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public void BypassIgnoresBlankPresetPath() =>
+        Assert.Empty(CommandLine.Parse(["run", "--chain", " ", "--bypass"]).Options.CreateProcessorChain().Processors);
 
     [Fact]
     public void RecognizesList() => Assert.Equal(CommandKind.List, CommandLine.Parse(["list"]).Kind);
@@ -128,24 +165,32 @@ public sealed class CommandLineTests
     public void RejectsEmptyChainPath() =>
         Assert.Throws<ArgumentException>(() => CommandLine.Parse(["run", "--chain", " "]));
 
+    [Fact]
+    public void RunOptionsCannotFallBackToDemoWhenPathIsMissing() =>
+        Assert.Throws<ArgumentException>(() => new RunOptions().CreateProcessorChain());
+
     [Theory]
     [InlineData("other", "Use 'list'")]
-    [InlineData("list --bypass", "takes no options")]
+    [InlineData("list --chain preset.json", "takes no options")]
+    [InlineData("run", "run requires --chain PATH")]
+    [InlineData("run --input 0 --output 1", "run requires --chain PATH")]
     [InlineData("run --unknown 1", "Unknown option --unknown")]
-    [InlineData("run --drive", "Missing value for --drive")]
+    [InlineData("run --drive", "Unknown option --drive")]
     [InlineData("run --input --output 0", "Missing value for --input")]
     [InlineData("run --input 0 --input 1", "Duplicate option --input")]
     [InlineData("run --bypass --bypass", "Duplicate option --bypass")]
+    [InlineData("list --bypass", "takes no options")]
+    [InlineData("run --bypass --input invalid", "--input must be an integer")]
+    [InlineData("run --bypass --chain", "Missing value for --chain")]
     [InlineData("run --input invalid", "--input must be an integer")]
     [InlineData("run --seconds 2147483648", "--seconds must be an integer")]
-    [InlineData("run --wet invalid", "--wet must be a number")]
+    [InlineData("run --wet 0.2", "Unknown option --wet")]
     [InlineData("run --seconds 0", "--seconds must be positive")]
     [InlineData("run --seconds -1", "--seconds must be positive")]
     [InlineData("run --chain", "Missing value for --chain")]
     [InlineData("run --chain a.json --chain b.json", "Duplicate option --chain")]
-    [InlineData("run --chain a.json --drive 2", "--chain cannot be combined")]
-    [InlineData("run --chain a.json --wet 0.1", "--chain cannot be combined")]
-    [InlineData("run --chain a.json --bypass", "--chain cannot be combined")]
+    [InlineData("run --chain a.json --drive 2", "Unknown option --drive")]
+    [InlineData("run --chain a.json --wet 0.1", "Unknown option --wet")]
     public void RejectsInvalidArgumentsWithOptionContext(string arguments, string message)
     {
         var error = Assert.Throws<ArgumentException>(() => CommandLine.Parse(arguments.Split(' ')));

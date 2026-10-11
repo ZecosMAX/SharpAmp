@@ -80,13 +80,13 @@ dotnet restore SharpAmp.slnx
 dotnet build SharpAmp.slnx
 dotnet test SharpAmp.slnx
 dotnet run --project SharpAmp.Cli -- list
-dotnet run --project SharpAmp.Cli -- run
+dotnet run --project SharpAmp.Cli -- run --chain "presets/guitar_(clean).json"
 ```
 
-`run` prompts for an input and output index. The two lists have separate indices. For a noninteractive session, select indices from the current list:
+`run --chain PATH` loads a JSON preset and prompts for an input and output index. The two lists have separate indices. For a noninteractive session, select indices from the current list:
 
 ```powershell
-dotnet run --project SharpAmp.Cli -- run --input 0 --output 1 --drive 3 --wet 0.2
+dotnet run --project SharpAmp.Cli -- run --input 0 --output 1 --chain "presets/guitar_(distorted).json"
 dotnet run --project SharpAmp.Cli -- run --input 0 --output 1 --bypass --seconds 10
 dotnet run --project SharpAmp.Cli -- --help
 ```
@@ -154,7 +154,7 @@ dotnet run --project SharpAmp.Cli -- run --chain presets/overdrive-room.json
 dotnet run --project SharpAmp.Cli -- run --input 0 --output 1 --chain "C:\My presets\clean.json"
 ```
 
-`--chain` accepts a local file path and cannot be combined with `--drive`, `--wet`, or `--bypass`. Without it, the CLI still uses the demo chain. Files are read once at session creation; select another file on the next run to change chains.
+`run` requires `--chain PATH` to a local JSON preset, or `--bypass` to skip all effects. Bypass overrides the preset regardless of argument order, without opening or validating its file; audio routing and format options still apply. Effect settings are configured only in JSON; there is no demo-chain fallback. Files are read once at session creation unless bypassed; select another file on the next run to change chains. See [Docs](Docs/README.md) for every effect and the [preset guide](Docs/Presets.md) for serialization, parameters, and complete examples.
 
 At startup, the CLI prints the active effects in processing order, including all effective settings (even defaults omitted from the preset):
 
@@ -164,7 +164,7 @@ Processor chain (in processing order):
   2. Reverb — wet mix: 0.2, feedback: 0.7, damping: 0.3
 ```
 
-An empty chain or `--bypass` prints `Processor chain: bypass (no effects)`.
+An empty JSON chain or `--bypass` prints `Processor chain: bypass (no effects)`.
 
 ```json
 {
@@ -175,40 +175,7 @@ An empty chain or `--bypass` prints `Processor chain: bypass (no effects)`.
 }
 ```
 
-Processors run in array order, and the same effect may appear multiple times. `processors` and each effect's `type` are required. `parameters` is an optional dictionary of numeric values; missing keys use the defaults below. `{"processors":[]}` provides bypass.
-
-| Type | Parameters (default; range) |
-| --- | --- |
-| `gain` | `gain` (1; >= 0, linear amplitude multiplier) |
-| `hardOverdrive` | `drive` (5; > 0), `outputGain` (0.35; 0..1) |
-| `distortion` | `drive` (3; > 0), `outputGain` (0.35; 0..1), `wet` (1; 0..1) |
-| `reverb` | `wet` (0.2; 0..1), `feedback` (0.7; >= 0 and < 1), `damping` (0.3; >= 0 and < 1) |
-| `delay` | `timeMs` (300; 1..2000), `feedback` (0.35; >= 0 and < 1), `wet` (0.25; 0..1) |
-| `tapeDelay` | `timeMs` (350; 1..2000), `feedback` (0.4; >= 0 and < 1), `wet` (0.25; 0..1), `toneHz` (3000; 20..20000), `wowDepthMs` (2; 0..10), `wowRateHz` (0.5; 0..10) |
-| `tremolo` | `rateHz` (4; 0..20), `depth` (0.5; 0..1) |
-| `bitcrusher` | `bits` (8; integer 2..16), `downsample` (4; integer 1..64), `wet` (1; 0..1) |
-| `octaveFuzz` | `drive` (5; > 0), `outputGain` (0.35; 0..1), `wet` (1; 0..1) |
-| `ringModulator` | `frequencyHz` (440; 0..20000), `wet` (0.5; 0..1) |
-
-All names are case-sensitive and all values must be finite JSON numbers. Unknown effects, unknown properties or parameters, duplicate keys, null objects, and out-of-range settings are rejected. JSON syntax/schema errors throw `JsonException`; invalid effect settings throw `ArgumentException` with the processor index and parameter where applicable. Custom processors remain available through the existing constructor; JSON supports the built-in types listed above.
-
-Library callers can load a JSON string directly or edit and serialize the configuration models:
-
-```csharp
-using SharpAmp.Core.Dsp;
-using SharpAmp.Core.Dsp.Configuration;
-
-var json = File.ReadAllText("presets/overdrive-room.json");
-var chain = ProcessorChain.FromJson(json);
-// Pass chain to AudioSession, or call Initialize before processing samples directly.
-
-var preset = ProcessorChainConfiguration.FromJson(json);
-preset.Processors[0].Parameters["drive"] = 3;
-File.WriteAllText("my-chain.json", preset.ToJson());
-var anotherChain = ProcessorChain.FromConfiguration(preset);
-```
-
-Each build creates independent processor instances with a snapshot of the settings. Editing the model does not change an existing chain. Presets store configuration only; reverb history and audio format are initialized for each stream.
+Processors run in array order. Each effect page in the [effect reference](Docs/README.md#effect-reference) documents its JSON type, defaults, ranges, and behavior. To create your own preset, copy [custom-chain.json](Docs/Examples/custom-chain.json) and follow the [preset format and C# serialization guide](Docs/Presets.md).
 
 ### Basic guitar and bass presets
 
@@ -229,18 +196,6 @@ dotnet run --project SharpAmp.Cli -- run --chain "presets/bass_(distorted).json"
 | `bass_(heavy).json` | Gain → stronger soft distortion, 70% wet; aggressive drive with some clean definition. |
 
 These are original, conservative starting settings, not amp models or measured artist tones. Adjust the first `gain` for pickup/interface level; adjust distortion `outputGain` for listening level. Clean presets start at unity to avoid clipping a hot input. Bass presets omit delay/reverb and retain a dry blend in the driven sounds, an approach also used by the [BOSS ODB-3](https://www.boss.info/us/products/odb-3/). Conventional bass rigs often include compression and EQ, as illustrated by [Fender's Downtown Express](https://www.fender.com/products/downtown-express-bass-multi-effect-pedal); those processors are not implemented here. No cabinet simulation is included, so direct distorted tones can remain bright.
-
-### New processor behavior
-
-- **Gain:** `gain: 1` is unity, `2` is approximately +6 dB, and `0` mutes. It does not clip or add coloration. Put it before distortion to control drive, or after effects to control output level; the final audio output still clips to `[-1, 1]`.
-- **Delay:** independent echoes per channel, rounded to the nearest sample with a one-sample minimum. Feedback sets repeat decay. Like the existing reverb, the wet path is scaled by `1 - feedback` to keep sustained bounded input from accumulating extra wet gain; increasing feedback also makes the first repeat quieter.
-- **Tape delay:** a simple tape-inspired effect with soft saturation in the feedback loop, a one-pole low-pass filter, and interpolated sinusoidal delay modulation. `toneHz` controls repeat brightness; `wowDepthMs: 0` disables wobble. Modulated delay is clamped to at least one sample; the tone cutoff is capped at 45% of the processing sample rate. The dry path stays untouched, and wet gain uses the same normalization as delay. This is not a model of a particular tape machine.
-- **Tremolo:** sine-shaped volume modulation from `1 - depth` to `1`, starting at full volume. `depth: 0` or `rateHz: 0` leaves volume unchanged. All channels share the modulation phase.
-- **Bitcrusher:** signed PCM-style quantization with sample-and-hold rate reduction. `downsample: 4` captures every fourth frame, independently per channel. The wet input is clipped to `[-1, 1]` before quantization; at `bits: 8`, the positive limit is `127/128`. No anti-alias filtering is applied, deliberately retaining the rough digital sound.
-- **Octave fuzz:** rectified soft clipping followed by a 20 Hz DC blocker, giving an octave-up character on single notes. It is not a polyphonic pitch shifter. `wet` blends the octave effect with the input; `outputGain` scales the resulting blend.
-- **Ring modulator:** multiplies the input by a bipolar sine carrier. `wet: 1` gives the full metallic effect; `frequencyHz: 0` makes the wet path silent. All channels share carrier phase. High carrier frequencies can alias, particularly at low sample rates.
-
-`distortion` now also accepts `wet` to blend clean and clipped signal before `outputGain`; its default of `1` preserves existing presets. All new processors keep state across variable-size blocks, clear history/phase on reset or initialization, and allocate their buffers during initialization rather than processing. Nonlinear effects use simple, non-oversampled algorithms.
 
 ## Add a DSP class
 
@@ -272,7 +227,7 @@ var chain = new ProcessorChain(
 
 Processors run in declaration order on the playback thread, after format conversion. `Initialize` receives the processing sample rate and channel count and must clear prior state. Blocks contain complete interleaved frames; their size can vary. Process synchronously, avoid blocking/I/O or per-sample allocations, and do not retain the sample span. Each session needs its own processor instances. Chain membership and effect settings are fixed for the session; do not call `Reset` or `Initialize` concurrently with processing. An empty chain provides bypass.
 
-The demo is **hard overdrive → reverb**; the CLI defaults to drive 7 and wet mix 0.2. The separate `DistortionProcessor` uses a tanh waveshaper and output gain. Reverb uses four parallel damped feedback combs per channel, with independent channel history and normalized wet gain. It is a basic algorithmic reverb, not convolution or a room simulation.
+The library demo is **hard overdrive → reverb**. The CLI loads the requested JSON preset unless `--bypass` skips effects. The separate `DistortionProcessor` uses a tanh waveshaper and output gain. Reverb uses four parallel damped feedback combs per channel, with independent channel history and normalized wet gain. It is a basic algorithmic reverb, not convolution or a room simulation.
 
 For hard clipping, use `HardOverdriveProcessor`: it multiplies each sample by `Drive`, clamps to `[-1, 1]`, then applies `OutputGain`. The default drive is 5 and output gain is 0.35. Drive must be finite and positive; output gain must be finite and in `[0, 1]`. It is stateless and processes each channel independently.
 

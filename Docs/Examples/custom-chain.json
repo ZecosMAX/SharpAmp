@@ -1,0 +1,8 @@
+{
+  "processors": [
+    { "type": "gain", "parameters": { "gain": 1.25 } },
+    { "type": "distortion", "parameters": { "drive": 3, "outputGain": 0.4, "wet": 0.8 } },
+    { "type": "delay", "parameters": { "timeMs": 250, "feedback": 0.25, "wet": 0.15 } },
+    { "type": "reverb", "parameters": { "wet": 0.1, "feedback": 0.5, "damping": 0.4 } }
+  ]
+}

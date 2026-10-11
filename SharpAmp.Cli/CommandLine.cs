@@ -11,7 +11,7 @@ internal static class CommandLine
     private static readonly HashSet<string> ValueOptions = new(StringComparer.Ordinal)
     {
         "--input", "--output", "--rate", "--input-channels", "--output-channels",
-        "--input-offset", "--output-offset", "--latency", "--buffer", "--drive", "--wet", "--seconds", "--chain"
+        "--input-offset", "--output-offset", "--latency", "--buffer", "--seconds", "--chain"
     };
 
     public static CliCommand Parse(string[] args)
@@ -30,17 +30,11 @@ internal static class CommandLine
         if (kind == CommandKind.List && values.Count != 0)
             throw new ArgumentException("The list command takes no options.");
 
-        if (values.TryGetValue("--chain", out var chainPath))
-        {
-            if (string.IsNullOrWhiteSpace(chainPath))
-                throw new ArgumentException("--chain must be a file path.");
-            if (values.ContainsKey("--drive") || values.ContainsKey("--wet") || values.ContainsKey("--bypass"))
-                throw new ArgumentException("--chain cannot be combined with --drive, --wet, or --bypass.");
-        }
-
         var options = BindOptions(values);
         if (values.ContainsKey("--seconds") && options.Seconds <= 0)
             throw new ArgumentException("--seconds must be positive.");
+        if (kind == CommandKind.Run && !options.Bypass && string.IsNullOrWhiteSpace(options.ChainPath))
+            throw new ArgumentException("run requires --chain PATH to a JSON preset, or --bypass to skip effects.");
 
         return new(kind, options);
     }
@@ -70,7 +64,6 @@ internal static class CommandLine
     private static RunOptions BindOptions(IReadOnlyDictionary<string, string> values)
     {
         var defaults = new RunOptions();
-        var bypass = values.ContainsKey("--bypass");
         return defaults with
         {
             InputIndex = ReadInt(values, "--input"),
@@ -82,10 +75,8 @@ internal static class CommandLine
             OutputOffset = ReadInt(values, "--output-offset") ?? defaults.OutputOffset,
             LatencyMilliseconds = ReadInt(values, "--latency") ?? defaults.LatencyMilliseconds,
             BufferMilliseconds = ReadInt(values, "--buffer") ?? defaults.BufferMilliseconds,
-            Drive = bypass ? defaults.Drive : ReadFloat(values, "--drive") ?? defaults.Drive,
-            Wet = bypass ? defaults.Wet : ReadFloat(values, "--wet") ?? defaults.Wet,
-            Bypass = bypass,
             ChainPath = values.GetValueOrDefault("--chain"),
+            Bypass = values.ContainsKey("--bypass"),
             Seconds = ReadInt(values, "--seconds") ?? defaults.Seconds
         };
     }
@@ -96,15 +87,6 @@ internal static class CommandLine
             return null;
         if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number))
             throw new ArgumentException($"{key} must be an integer.");
-        return number;
-    }
-
-    private static float? ReadFloat(IReadOnlyDictionary<string, string> values, string key)
-    {
-        if (!values.TryGetValue(key, out var value))
-            return null;
-        if (!float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var number))
-            throw new ArgumentException($"{key} must be a number using '.' as the decimal separator.");
         return number;
     }
 }
