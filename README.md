@@ -29,6 +29,48 @@ The solution contains three projects:
 
 The CLI keeps command dispatch in `Program.cs`, argument parsing in `CommandLine.cs`, typed configuration in `RunOptions.cs`, device listing and prompts in `DeviceSelection.cs`, playback and shutdown in `SessionRunner.cs`, and usage text in `HelpText.cs`.
 
+## Installation
+
+### Linux
+Currently, Core lib and cli target `.net10.0-windows` because all of the audio shenanigans. So there is no support for linux, yet :(
+I plan to add it, when I'll be able to test on unix machine. Or you can contribute!
+
+### Windows
+Download and install .NET 10.0.12 Runtime directly from [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+
+or;
+
+Open a terminal, and install via `winget` in the directory of your choosing
+```Bash
+winget install -e --id Microsoft.DotNet.Runtime.10
+```
+
+Check the versions of installed dotnet runtimes
+
+```Bash
+dotnet --list-runtimes
+```
+
+It should output something like this:
+```Bash
+Microsoft.AspNetCore.App 10.0.12 [C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App]
+Microsoft.NETCore.App 10.0.12 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
+Microsoft.WindowsDesktop.App 10.0.12 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]
+```
+If it does, you're good to go, if it doesn't try restarting your terminal or PC altogether
+
+Next, clone the repository
+```
+git clone https://github.com/ZecosMAX/SharpAmp.git
+```
+
+Enter repository directory
+```Bash
+cd SharpAmp
+```
+
+Proceed to the Run section
+
 ## Run
 
 Install the .NET 10 SDK on Windows, then run from the solution directory:
