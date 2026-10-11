@@ -1,0 +1,6 @@
+{
+  "processors": [
+    { "type": "gain", "parameters": { "gain": 1.25 } },
+    { "type": "distortion", "parameters": { "drive": 4, "outputGain": 0.55, "wet": 0.45 } }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "processors": [
+    { "type": "gain", "parameters": { "gain": 1 } }
+  ]
+}

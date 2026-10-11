@@ -1,0 +1,7 @@
+{
+  "processors": [
+    { "type": "gain", "parameters": { "gain": 2 } },
+    { "type": "hardOverdrive", "parameters": { "drive": 10, "outputGain": 0.4 } },
+    { "type": "reverb", "parameters": { "wet": 0.04, "feedback": 0.4, "damping": 0.5 } }
+  ]
+}
