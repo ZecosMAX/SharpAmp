@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SharpAmp.Avalonia.ViewModels"
+             xmlns:views="using:SharpAmp.Avalonia.Views"
+             x:Class="SharpAmp.Avalonia.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel"
+             x:CompileBindings="True">
+    <UserControl.DataTemplates>
+        <!-- Register each new settings page here and add its view model to Pages. -->
+        <DataTemplate DataType="vm:AudioSettingsViewModel">
+            <views:AudioSettingsView />
+        </DataTemplate>
+    </UserControl.DataTemplates>
+    <Grid ColumnDefinitions="190,*">
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,0,1,0" Padding="16,24">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Settings" FontSize="24" FontWeight="SemiBold" Margin="8,0,0,24" />
+                <ListBox ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage, Mode=TwoWay}"
+                         SelectionMode="AlwaysSelected" Background="Transparent"
+                         AutomationProperties.Name="Settings pages">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SettingsPageViewModel">
+                            <TextBlock Text="{Binding Title}" Margin="8,6" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+        <ContentControl Grid.Column="1" Content="{Binding SelectedPage}"
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+    </Grid>
+</UserControl>

@@ -2,6 +2,12 @@
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
-        public string Greeting { get; } = "Welcome to Avalonia!";
+        public Models.AudioSettings AudioSettings { get; } = new();
+        public SettingsViewModel Settings { get; }
+
+        public MainWindowViewModel()
+        {
+            Settings = new SettingsViewModel(new AudioSettingsViewModel(AudioSettings));
+        }
     }
 }

@@ -1,5 +1,6 @@
 <Solution>
-  <Project Path="SharpAmp.Core/SharpAmp.Core.csproj" />
+  <Project Path="SharpAmp.Avalonia/SharpAmp.Avalonia.csproj" Id="242d1b33-4d59-4878-ad91-d748dca03f56" />
   <Project Path="SharpAmp.Cli/SharpAmp.Cli.csproj" />
+  <Project Path="SharpAmp.Core/SharpAmp.Core.csproj" />
   <Project Path="SharpAmp.Tests/SharpAmp.Tests.csproj" />
 </Solution>

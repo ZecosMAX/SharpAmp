@@ -1,0 +1,126 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SharpAmp.Avalonia.ViewModels"
+             xmlns:audio="clr-namespace:SharpAmp.Core.Audio;assembly=SharpAmp.Core"
+             x:Class="SharpAmp.Avalonia.Views.AudioSettingsView"
+             x:DataType="vm:AudioSettingsViewModel"
+             x:CompileBindings="True">
+    <UserControl.Styles>
+        <Style Selector="ComboBox">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="FormatString" Value="0" />
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="Opacity" Value="0.7" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="Border.section">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="20" />
+        </Style>
+    </UserControl.Styles>
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="28" Spacing="20" MaxWidth="820" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Audio settings" FontSize="28" FontWeight="SemiBold" />
+                <TextBlock Classes="hint" Text="Choose the devices and format for your audio session." />
+            </StackPanel>
+            <Border Classes="section">
+                <StackPanel Spacing="16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Devices" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="Refresh devices" Command="{Binding RefreshDevicesCommand}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Input backend" />
+                            <ComboBox ItemsSource="{Binding Backends}" SelectedItem="{Binding Settings.InputBackend, Mode=TwoWay}" AutomationProperties.Name="Input backend" />
+                            <TextBlock Text="Input device" Margin="0,8,0,0" />
+                            <ComboBox ItemsSource="{Binding InputDevices}" SelectedItem="{Binding Settings.InputDevice, Mode=TwoWay}" PlaceholderText="Select input device" AutomationProperties.Name="Input device">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="audio:AudioDevice">
+                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock Classes="hint" Text="{Binding InputDeviceMessage}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="8">
+                            <TextBlock Text="Output backend" />
+                            <ComboBox ItemsSource="{Binding Backends}" SelectedItem="{Binding Settings.OutputBackend, Mode=TwoWay}" AutomationProperties.Name="Output backend" />
+                            <TextBlock Text="Output device" Margin="0,8,0,0" />
+                            <ComboBox ItemsSource="{Binding OutputDevices}" SelectedItem="{Binding Settings.OutputDevice, Mode=TwoWay}" PlaceholderText="Select output device" AutomationProperties.Name="Output device">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="audio:AudioDevice">
+                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock Classes="hint" Text="{Binding OutputDeviceMessage}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+            <Border Classes="section">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Session format" FontSize="18" FontWeight="SemiBold" />
+                    <Grid ColumnDefinitions="*,20,*,20,*">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Sample rate (Hz)" />
+                            <ComboBox ItemsSource="{Binding SampleRates}" SelectedItem="{Binding Settings.SampleRate, Mode=TwoWay}" AutomationProperties.Name="Sample rate in Hz" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="8">
+                            <TextBlock Text="Input channels" />
+                            <NumericUpDown Value="{Binding Settings.InputChannels, Mode=TwoWay}" Minimum="1" Maximum="32" Increment="1" AutomationProperties.Name="Input channels" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="4" Spacing="8">
+                            <TextBlock Text="Output channels" />
+                            <NumericUpDown Value="{Binding Settings.OutputChannels, Mode=TwoWay}" Minimum="1" Maximum="32" Increment="1" AutomationProperties.Name="Output channels" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Classes="hint" Text="Available formats depend on the selected hardware. Device support is checked when a session starts." />
+                </StackPanel>
+            </Border>
+            <Border Classes="section">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Latency and buffering" FontSize="18" FontWeight="SemiBold" />
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Requested latency (ms)" />
+                            <NumericUpDown Value="{Binding Settings.LatencyMilliseconds, Mode=TwoWay}" Minimum="5" Maximum="1000" Increment="5" AutomationProperties.Name="Requested latency in milliseconds" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="8">
+                            <TextBlock Text="Buffer duration (ms)" />
+                            <NumericUpDown Value="{Binding Settings.BufferMilliseconds, Mode=TwoWay}" Minimum="10" Maximum="5000" Increment="10" AutomationProperties.Name="Buffer duration in milliseconds" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Classes="hint" Text="The session buffer must be at least twice the requested latency. Larger buffers tolerate more processing delay." />
+                    <TextBlock Classes="hint" IsVisible="{Binding UsesAsio}" Text="ASIO hardware buffer size is controlled by the driver. The buffer above controls the session's audio queue." />
+                </StackPanel>
+            </Border>
+            <Border Classes="section" IsVisible="{Binding UsesAsio}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="ASIO channel routing" FontSize="18" FontWeight="SemiBold" />
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Spacing="8" IsVisible="{Binding IsAsioInput}">
+                            <TextBlock Text="Input channel offset" />
+                            <NumericUpDown Value="{Binding Settings.AsioInputChannelOffset, Mode=TwoWay}" Minimum="0" Maximum="2147483647" Increment="1" AutomationProperties.Name="ASIO input channel offset" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="8" IsVisible="{Binding IsAsioOutput}">
+                            <TextBlock Text="Output channel offset" />
+                            <NumericUpDown Value="{Binding Settings.AsioOutputChannelOffset, Mode=TwoWay}" Minimum="0" Maximum="2147483647" Increment="1" AutomationProperties.Name="ASIO output channel offset" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Classes="hint" Text="Offsets are zero-based: 0 starts at the first hardware channel." />
+                </StackPanel>
+            </Border>
+            <TextBlock Text="{Binding ValidationMessage}" IsVisible="{Binding HasValidationError}" TextWrapping="Wrap" />
+            <TextBlock Classes="hint" Text="Changes are kept for this app session." />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

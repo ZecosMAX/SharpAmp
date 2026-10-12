@@ -12,6 +12,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" PrivateAssets="all" />
     <ProjectReference Include="../SharpAmp.Core/SharpAmp.Core.csproj" />
     <ProjectReference Include="../SharpAmp.Cli/SharpAmp.Cli.csproj" />
+    <ProjectReference Include="../SharpAmp.Avalonia/SharpAmp.Avalonia.csproj" />
     <Using Include="Xunit" />
     <None Include="../presets/*.json" Link="presets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Docs/**/*" Link="Docs/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
