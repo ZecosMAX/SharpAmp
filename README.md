@@ -27,8 +27,6 @@ The solution contains three projects:
 | `SharpAmp.Cli` | Device selection and live processing from the terminal |
 | `SharpAmp.Tests` | Hardware-independent xUnit tests for DSP, sample conversion, and session lifecycle |
 
-The CLI keeps command dispatch in `Program.cs`, argument parsing in `CommandLine.cs`, typed configuration in `RunOptions.cs`, device listing and prompts in `DeviceSelection.cs`, playback and shutdown in `SessionRunner.cs`, and usage text in `HelpText.cs`.
-
 ## Installation
 
 ### Linux
