@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SharpAmp.Avalonia.ViewModels"
+             x:Class="SharpAmp.Avalonia.Controls.ProcessorBox"
+             x:DataType="vm:ProcessorViewModel" x:CompileBindings="True"
+             Width="270">
+    <ThemeVariantScope RequestedThemeVariant="Dark">
+    <Border Background="#202830" BorderBrush="#3A4953" BorderThickness="1"
+            CornerRadius="16" ClipToBounds="True" BoxShadow="0 6 18 0 #30000000">
+        <Grid RowDefinitions="5,*">
+            <Border Background="#66D5BD" />
+            <StackPanel Grid.Row="1" Margin="24" Spacing="24">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding Description}" FontSize="11" LetterSpacing="1.4" Foreground="#66D5BD" />
+                    <TextBlock Text="{Binding Name}" FontSize="25" FontWeight="SemiBold" Foreground="#F2F5F7" />
+                </StackPanel>
+                <ItemsControl ItemsSource="{Binding Parameters}" IsEnabled="{Binding IsEditable}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ProcessorParameterViewModel">
+                            <StackPanel Spacing="8" Margin="0,0,0,18">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="{Binding Name}" Foreground="#C1CDD5" />
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayValue}" Foreground="#F2F5F7" FontWeight="SemiBold" />
+                                </Grid>
+                                <Slider Minimum="{Binding Minimum}" Maximum="{Binding Maximum}"
+                                        SmallChange="{Binding Step}" TickFrequency="{Binding Step}" IsSnapToTickEnabled="True"
+                                        Value="{Binding Value, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+    </Border>
+    </ThemeVariantScope>
+</UserControl>

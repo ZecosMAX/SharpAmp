@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SharpAmp.Avalonia.ViewModels"
+             xmlns:controls="using:SharpAmp.Avalonia.Controls"
+             x:Class="SharpAmp.Avalonia.Views.ProcessorChainView"
+             x:DataType="vm:ProcessorChainViewModel" x:CompileBindings="True">
+    <Border Background="#141B21" Padding="28" CornerRadius="16">
+        <Grid RowDefinitions="Auto,*">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Signal chain" FontSize="28" FontWeight="SemiBold" Foreground="#F2F5F7" />
+                <TextBlock Text="Your sound flows from left to right." Foreground="#9DAFB9" />
+            </StackPanel>
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0,28,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Margin="0,8,0,20">
+                    <TextBlock Text="INPUT" Foreground="#9DAFB9" FontSize="11" LetterSpacing="1" VerticalAlignment="Center" />
+                    <ItemsControl ItemsSource="{Binding Processors}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ProcessorViewModel">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="→" Foreground="#66D5BD" FontSize="28" Margin="18,0" VerticalAlignment="Center" />
+                                    <controls:ProcessorBox VerticalAlignment="Top" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="→" Foreground="#66D5BD" FontSize="28" Margin="18,0" VerticalAlignment="Center" />
+                    <TextBlock Text="OUTPUT" Foreground="#9DAFB9" FontSize="11" LetterSpacing="1" VerticalAlignment="Center" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

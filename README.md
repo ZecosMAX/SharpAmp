@@ -19,12 +19,13 @@ Selected input → bounded capture queue → float conversion → sample-rate co
               → channel mapping → IDigitalSignalProcessor chain → selected output
 ```
 
-The solution contains three projects:
+The solution contains four projects:
 
 | Project | Purpose |
 | --- | --- |
 | `SharpAmp.Core` | Device enumeration, audio sessions, DSP interface, gain, drive, delay, modulation, lo-fi effects, reverb, and demo chain |
 | `SharpAmp.Cli` | Device selection and live processing from the terminal |
+| `SharpAmp.Avalonia` | Desktop processor chain, parameter sliders, audio settings, and engine start/stop |
 | `SharpAmp.Tests` | Hardware-independent xUnit tests for DSP, sample conversion, and session lifecycle |
 
 ## Installation
@@ -70,6 +71,16 @@ cd SharpAmp
 Proceed to the Run section
 
 ## Run
+
+### Desktop GUI
+
+```powershell
+dotnet run --project SharpAmp.Avalonia
+```
+
+The main view starts with **hard overdrive → reverb**, displayed as processor cards connected by arrows. Adjust the parameter sliders, select input and output devices in **Settings**, then use **Start audio** in the top-right corner. Stop audio before changing parameters or device settings; each start creates a fresh session with the current values. Device errors appear below the header, and closing the window releases the audio session.
+
+### Command line
 
 Install the .NET 10 SDK on Windows, then run from the solution directory:
 

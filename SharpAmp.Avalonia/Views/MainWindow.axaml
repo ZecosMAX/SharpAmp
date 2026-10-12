@@ -6,10 +6,63 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SharpAmp.Avalonia.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
+        x:DataType="vm:MainWindowViewModel" x:CompileBindings="True"
         Icon="/Assets/avalonia-logo.ico"
         Title="SharpAmp" Width="1000" Height="820" MinWidth="800" MinHeight="500">
 
-    <views:SettingsView DataContext="{Binding Settings}" />
+    <Window.Styles>
+        <Style Selector="Button.engine">
+            <Setter Property="Background" Value="#263B3C" />
+            <Setter Property="Foreground" Value="#9CEAD6" />
+            <Setter Property="BorderBrush" Value="#497A70" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="24" />
+            <Setter Property="Padding" Value="20,12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.engine.running">
+            <Setter Property="Background" Value="#66D5BD" />
+            <Setter Property="Foreground" Value="#102A24" />
+        </Style>
+        <Style Selector="Button.engine:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#387465" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*" Background="{Binding $parent[Window].Background}">
+        <Border Background="#141B21" Padding="28,20">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel VerticalAlignment="Center" Spacing="3">
+                    <TextBlock Text="SharpAmp" FontSize="26" FontWeight="Bold" Foreground="#F2F5F7" />
+                    <TextBlock Text="YOUR DESKTOP PEDALBOARD" FontSize="10" LetterSpacing="2" Foreground="#9DAFB9" />
+                </StackPanel>
+                <Button Grid.Column="1" Classes="engine" Classes.running="{Binding IsEngineRunning}"
+                        Command="{Binding ToggleEngineCommand}" VerticalAlignment="Center"
+                        AutomationProperties.Name="{Binding EngineButtonText}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="⏻" FontSize="20" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding EngineButtonText}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+        <StackPanel Grid.Row="1" Margin="28,16" Spacing="8">
+            <TextBlock Text="{Binding EngineStatus}" TextWrapping="Wrap" />
+            <Border IsVisible="{Binding HasEngineError}" Background="#382425" CornerRadius="8" Padding="12">
+                <TextBlock Text="{Binding EngineError}" Foreground="#FFB4AB" TextWrapping="Wrap" />
+            </Border>
+        </StackPanel>
+        <TabControl Grid.Row="2" Margin="16,0,16,16" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+            <TabItem Header="Processor chain">
+                <views:ProcessorChainView DataContext="{Binding ProcessorChain}" />
+            </TabItem>
+            <TabItem Header="Settings">
+                <ContentControl IsEnabled="{Binding CanEdit}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                    <views:SettingsView DataContext="{Binding Settings}" />
+                </ContentControl>
+            </TabItem>
+        </TabControl>
+    </Grid>
 
 </Window>
