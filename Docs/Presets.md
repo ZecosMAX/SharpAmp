@@ -2,7 +2,7 @@
 
 [Documentation index](README.md)
 
-SharpAmp loads a chain from one local JSON file. A preset contains effect types and settings; device choices, sample rate, channels, and run duration remain CLI options.
+This guide describes the **CLI/Core preset format**. A preset contains effect types and settings; device choices, sample rate, channels, and run duration remain CLI options. The [desktop pedalboard](Pedalboard.md) imports these files but saves a richer `.sharpamp.json` format containing names, effect IDs, explicit connections, and individual bypass states. Desktop saves are not accepted directly by the CLI/Core loader.
 
 ## Create your first chain
 

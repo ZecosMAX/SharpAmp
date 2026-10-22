@@ -1,11 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
-using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using SharpAmp.Avalonia.Services;
 using SharpAmp.Avalonia.ViewModels;
 using SharpAmp.Avalonia.Views;
-using System.Linq;
 
 namespace SharpAmp.Avalonia
 {
@@ -20,9 +18,14 @@ namespace SharpAmp.Avalonia
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
+                var settingsStore = new ApplicationSettingsStore();
+                var savedSettings = settingsStore.Load();
                 desktop.MainWindow = new MainWindow
                 {
-                    DataContext = new MainWindowViewModel(),
+                    DataContext = new MainWindowViewModel(savedSettings.AudioSettings,
+                        applicationPreferences: savedSettings.Preferences,
+                        settingsStore: settingsStore,
+                        settingsLoadError: savedSettings.Error),
                 };
             }
 

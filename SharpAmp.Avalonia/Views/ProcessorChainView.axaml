@@ -4,32 +4,139 @@
              xmlns:controls="using:SharpAmp.Avalonia.Controls"
              x:Class="SharpAmp.Avalonia.Views.ProcessorChainView"
              x:DataType="vm:ProcessorChainViewModel" x:CompileBindings="True">
-    <Border Background="#141B21" Padding="28" CornerRadius="16">
-        <Grid RowDefinitions="Auto,*">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Signal chain" FontSize="28" FontWeight="SemiBold" Foreground="#F2F5F7" />
-                <TextBlock Text="Your sound flows from left to right." Foreground="#9DAFB9" />
+    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12">
+        <Grid ColumnDefinitions="*,Auto" Margin="8,14,8,0">
+            <StackPanel Spacing="3">
+                <TextBlock Classes="eyebrow" Text="PEDALBOARD" />
+                <TextBox Text="{Binding BoardName, Mode=TwoWay}" FontSize="23" FontWeight="SemiBold" BorderThickness="0"
+                         Background="Transparent" Padding="0,3" MaxLength="100" MaxWidth="360" HorizontalAlignment="Left"
+                         AutomationProperties.Name="Preset name" PlaceholderText="Name your sound" />
             </StackPanel>
-            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0,28,0,0">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Margin="0,8,0,20">
-                    <TextBlock Text="INPUT" Foreground="#9DAFB9" FontSize="11" LetterSpacing="1" VerticalAlignment="Center" />
-                    <ItemsControl ItemsSource="{Binding Processors}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ProcessorViewModel">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="→" Foreground="#66D5BD" FontSize="28" Margin="18,0" VerticalAlignment="Center" />
-                                    <controls:ProcessorBox VerticalAlignment="Top" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <TextBlock Text="→" Foreground="#66D5BD" FontSize="28" Margin="18,0" VerticalAlignment="Center" />
-                    <TextBlock Text="OUTPUT" Foreground="#9DAFB9" FontSize="11" LetterSpacing="1" VerticalAlignment="Center" />
-                </StackPanel>
-            </ScrollViewer>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal" Spacing="6">
+                <TextBlock Classes="muted" Text="Unsaved changes" IsVisible="{Binding HasChanges}" VerticalAlignment="Center" FontSize="11" Margin="0,0,8,0" />
+                <Button Classes="quiet" Content="New" Click="OnNew" ToolTip.Tip="Start with a clean input and no effects." />
+                <Button Classes="quiet" Content="Open preset" Click="OnOpen" ToolTip.Tip="Load a sound preset, including existing SharpAmp JSON presets." />
+                <Button Classes="primary" Content="Save preset" Click="OnSave" ToolTip.Tip="Save every effect, connection, bypass switch and setting." />
+            </StackPanel>
         </Grid>
-    </Border>
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="8,0">
+            <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" Margin="0,0,12,0">
+                <ComboBox x:Name="QuickEffectPicker" Width="176" ItemsSource="{Binding AvailableEffects}" SelectedIndex="0" IsVisible="False"
+                          AutomationProperties.Name="Effect to add">
+                    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{ReflectionBinding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button x:Name="QuickAddButton" Grid.Column="1" Classes="quiet" Content="+ Add effect" Click="OnQuickAdd" IsVisible="False" />
+                <TextBlock x:Name="BoardHint" Grid.Column="2" Classes="muted" Text="{Binding RoutingSummary}" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap" />
+            </Grid>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Classes="quiet" Content="Arrange" Click="OnArrange" ToolTip.Tip="Neatly arrange the cards in processing order." />
+                <Button Classes="quiet" Content="Layout ▾" ToolTip.Tip="Save or restore card positions independently of your sound.">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuItem Header="Save layout…" Click="OnSaveLayout" />
+                            <MenuItem Header="Load layout…" Click="OnOpenLayout" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+            </StackPanel>
+        </Grid>
+        <Grid x:Name="Workspace" Grid.Row="2" ColumnDefinitions="194,*,284" ColumnSpacing="12">
+            <Border x:Name="Library" Background="#191E23" CornerRadius="10" Padding="12">
+                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+                    <StackPanel Spacing="5" Margin="4,4,0,0">
+                        <TextBlock Text="Add an effect" FontWeight="SemiBold" FontSize="15" />
+                        <TextBlock Classes="muted" Text="Drag onto the board or use +" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <TextBox Grid.Row="1" x:Name="EffectSearch" PlaceholderText="Search effects…" TextChanged="OnSearchChanged" AutomationProperties.Name="Search effects" />
+                    <ScrollViewer Grid.Row="2" Classes="spaced-scroll" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="EffectLibrary" ItemsSource="{Binding AvailableEffects}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="effect-source" Margin="0,0,0,8" Padding="10,9,6,9" CornerRadius="7"
+                                            BorderBrush="#353E46" BorderThickness="1" Background="Transparent" Cursor="SizeAll"
+                                            PointerPressed="OnLibraryPointerPressed" ToolTip.Tip="{ReflectionBinding Description}">
+                                        <Grid ColumnDefinitions="3,*,Auto" ColumnSpacing="9">
+                                            <Border Background="{ReflectionBinding Accent}" CornerRadius="2" />
+                                            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                                                <TextBlock Text="{ReflectionBinding Name}" FontWeight="Medium" FontSize="12" TextWrapping="Wrap" />
+                                                <TextBlock Text="{ReflectionBinding Category}" Classes="muted" FontSize="9" />
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Classes="effect-add" Content="+" Click="OnAddEffect"
+                                                    Padding="0" Width="28" Height="32" MinHeight="32" Background="Transparent"
+                                                    Foreground="#85E0BE" VerticalAlignment="Center" HorizontalContentAlignment="Center"
+                                                    FontSize="18" Cursor="Hand" ToolTip.Tip="Add an unconnected effect to the board."
+                                                    AutomationProperties.Name="{ReflectionBinding Name, StringFormat='{}Add {0}'}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+            <Border x:Name="BoardBorder" Grid.Column="1" Background="#14191D" BorderBrush="#2D363D" BorderThickness="1" CornerRadius="10" ClipToBounds="True">
+                <Grid>
+                    <ScrollViewer x:Name="BoardScroll" Classes="spaced-scroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                                  HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                        <controls:PedalboardCanvas x:Name="Board" />
+                    </ScrollViewer>
+                    <StackPanel IsVisible="{Binding IsEmpty}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="280" IsHitTestVisible="False">
+                        <TextBlock Text="A clean start." FontSize="25" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                        <TextBlock Text="Add your first effect, then drag between connection points to wire your sound." TextWrapping="Wrap" TextAlignment="Center" Classes="muted" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <Border x:Name="Inspector" Grid.Column="2" Background="#191E23" CornerRadius="10" Padding="18">
+                <Grid>
+                    <StackPanel IsVisible="{Binding !HasSelection}" Spacing="10" VerticalAlignment="Center">
+                        <TextBlock Text="Make it yours" FontSize="19" FontWeight="SemiBold" />
+                        <TextBlock Text="Select an effect to adjust its sound. Every change can be heard while you play." Classes="muted" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Grid IsVisible="{Binding HasSelection}" RowDefinitions="Auto,*,Auto" RowSpacing="14">
+                        <StackPanel Spacing="6">
+                            <TextBlock Classes="eyebrow" Text="EFFECT SETTINGS" />
+                            <TextBlock Text="{Binding SelectedProcessor.Name}" FontSize="21" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding SelectedProcessor.Description}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
+                            <TextBlock Text="{Binding SelectedProcessor.ConnectionLabel}" Foreground="#B6C9C1" FontSize="12" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ScrollViewer Grid.Row="1" Classes="spaced-scroll" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="12">
+                                <ToggleSwitch IsChecked="{Binding SelectedProcessor.IsBypassed, Mode=TwoWay}" Content="Bypass effect" />
+                                <ItemsControl ItemsSource="{Binding SelectedProcessor.Parameters}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:ProcessorParameterViewModel">
+                                            <StackPanel Spacing="5" Margin="0,0,0,18">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayValue}" Foreground="#85E0BE" FontSize="12" VerticalAlignment="Center" />
+                                                </Grid>
+                                                <Slider Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" SmallChange="{Binding Step}" TickFrequency="{Binding Step}"
+                                                        Value="{Binding Value, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}" />
+                                                <NumericUpDown Value="{Binding Value, Mode=TwoWay}" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Increment="{Binding Step}"
+                                                               FormatString="0.##" AutomationProperties.Name="{Binding Name, StringFormat='{}{0} exact value'}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+                        <StackPanel Grid.Row="2" Spacing="8">
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="6" IsEnabled="{Binding SelectedProcessor.IsInSignalPath}">
+                                <Button Classes="quiet" Content="← Earlier" Click="OnEarlier" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" ToolTip.Tip="Move one step earlier in the sound chain. Alt+Left on a card." />
+                                <Button Grid.Column="1" Classes="quiet" Content="Later →" Click="OnLater" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" ToolTip.Tip="Move one step later in the sound chain. Alt+Right on a card." />
+                            </Grid>
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
+                                <Button Classes="quiet" Content="Duplicate" Click="OnDuplicate" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                                <Button Grid.Column="1" Classes="quiet" Content="Remove" Click="OnRemove" Foreground="#F1AAA4" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+        <StackPanel Grid.Row="3" Spacing="5" Margin="8,0">
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#B6C9C1" TextWrapping="Wrap" FontSize="12" />
+            <TextBlock x:Name="HelpText" Text="Drag between ports to connect · Right-click a cable to disconnect · B to bypass · Delete to remove" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+        </StackPanel>
+    </Grid>
 </UserControl>

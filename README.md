@@ -25,8 +25,8 @@ The solution contains four projects:
 | --- | --- |
 | `SharpAmp.Core` | Device enumeration, audio sessions, DSP interface, gain, drive, delay, modulation, lo-fi effects, reverb, and demo chain |
 | `SharpAmp.Cli` | Device selection and live processing from the terminal |
-| `SharpAmp.Avalonia` | Desktop processor chain, parameter sliders, audio settings, and engine start/stop |
-| `SharpAmp.Tests` | Hardware-independent xUnit tests for DSP, sample conversion, and session lifecycle |
+| `SharpAmp.Avalonia` | Visual pedalboard, live effect editing, presets, layouts, and persistent audio/workspace settings |
+| `SharpAmp.Tests` | Hardware-independent xUnit tests for DSP, live chain transitions, editor documents, settings, and session lifecycle |
 
 ## Installation
 
@@ -78,7 +78,13 @@ Proceed to the Run section
 dotnet run --project SharpAmp.Avalonia
 ```
 
-The main view starts with **hard overdrive → reverb**, displayed as processor cards connected by arrows. Adjust the parameter sliders, select input and output devices in **Settings**, then use **Start audio** in the top-right corner. Stop audio before changing parameters or device settings; each start creates a fresh session with the current values. Device errors appear below the header, and closing the window releases the audio session.
+The **Pedalboard** starts with **hard overdrive → reverb**. Choose your input and output devices in **Settings**, return to the board, and click **Start audio**. Select a block to adjust its sliders or exact numeric values. Add, duplicate, remove, reorder, or bypass effects while audio runs; stop audio to change devices or audio format.
+
+New blocks start unconnected. Drag between ports, or click an output and then an input, to wire a complete **INPUT → OUTPUT** path into one serial `ProcessorChain`. Reconnecting a port replaces only its occupied cable; other cables and block positions stay in place. Drag an existing cable near an endpoint to rewire it, or right-click to disconnect. Effects outside the complete path keep their settings but are not processed; an incomplete path produces silence. Drag a block's header to arrange the workspace, or use **Earlier / Later** to swap effects within the connected path. Branches, mixers, and feedback loops are not supported. On narrower windows, an effect picker replaces the library sidebar.
+
+**Save preset** stores the name, all effects, explicit connections, parameters, and individual bypass states in a desktop `.sharpamp.json` file. **Open preset** also imports earlier desktop and existing CLI/Core JSON presets as serial paths. Desktop saves contain additional fields and cannot be passed directly to the CLI. Use **Layout → Save layout / Load layout** for block positions independently of the sound. Use **Save settings** in Settings to remember audio devices, timing, helpful tips, and grid snapping on this computer; settings are restored on launch, with unavailable devices left unselected.
+
+Live effect edits publish a fresh chain with a 10 ms crossfade, so delay, reverb, and modulation history resets when the sound changes. **Bypass all** crossfades to the clean input while the effects keep running and retaining their history. Moving blocks on the canvas does not rebuild the sound. Device errors appear below the header; closing the window releases the audio session. See the [pedalboard guide](Docs/Pedalboard.md) for keyboard controls, file formats, and a complete walkthrough.
 
 ### Command line
 
@@ -131,7 +137,9 @@ if (await session.Completion is { } error)
     Console.Error.WriteLine(error.Message);
 ```
 
-`AudioSession` owns the native capture/playback resources. It is single use: dispose it and create another session to change devices, format, or processors. `Stop()` is idempotent and cuts the stream immediately, including the reverb tail. `Completion` returns `null` on a requested stop or an exception on failure; applications can await it to detect a disconnected device or failed processor. `DroppedInputFrames` reports capture queue overflow. Explicit disposal is required even after completion.
+`AudioSession` owns the native capture/playback resources. It is single use: dispose it and create another session to change devices, format, or the processor instance supplied to its constructor. `Stop()` is idempotent and cuts the stream immediately, including the reverb tail. `Completion` returns `null` on a requested stop or an exception on failure; applications can await it to detect a disconnected device or failed processor. `DroppedInputFrames` reports capture queue overflow. Explicit disposal is required even after completion.
+
+For live effect changes, supply a `LiveProcessorChain` as the session's processor. After the session has started, call `Replace` with a fresh, independent `ProcessorChain` from the control thread. It initializes the replacement before publication and crossfades on the audio thread over 10 ms; a failed initialization leaves the playing chain intact. Replacement resets effect history, and rapid changes coalesce while a transition finishes. Set `IsBypassed` to crossfade between processed and clean input while continuing to process the effects. Do not reuse or mutate published processors, or call `Initialize` or `Reset` during playback.
 
 Input and output can use different backends, for example ASIO input to WASAPI output. No default device is silently substituted when a selected device fails.
 
@@ -163,7 +171,7 @@ dotnet run --project SharpAmp.Cli -- run --chain presets/overdrive-room.json
 dotnet run --project SharpAmp.Cli -- run --input 0 --output 1 --chain "C:\My presets\clean.json"
 ```
 
-`run` requires `--chain PATH` to a local JSON preset, or `--bypass` to skip all effects. Bypass overrides the preset regardless of argument order, without opening or validating its file; audio routing and format options still apply. Effect settings are configured only in JSON; there is no demo-chain fallback. Files are read once at session creation unless bypassed; select another file on the next run to change chains. See [Docs](Docs/README.md) for every effect and the [preset guide](Docs/Presets.md) for serialization, parameters, and complete examples.
+`run` requires `--chain PATH` to a local CLI/Core JSON preset, or `--bypass` to skip all effects. Bypass overrides the preset regardless of argument order, without opening or validating its file; audio routing and format options still apply. In the CLI, effect settings are configured only in JSON; there is no demo-chain fallback. Files are read once at session creation unless bypassed; select another file on the next run to change chains. Desktop `.sharpamp.json` saves use a separate format described in the [pedalboard guide](Docs/Pedalboard.md#presets-layouts-and-settings). See [Docs](Docs/README.md) for every effect and the [CLI/Core preset guide](Docs/Presets.md) for serialization, parameters, and complete examples.
 
 At startup, the CLI prints the active effects in processing order, including all effective settings (even defaults omitted from the preset):
 
@@ -234,7 +242,7 @@ var chain = new ProcessorChain(
     new ReverbProcessor(wet: 0.2f, feedback: 0.7f, damping: 0.3f));
 ```
 
-Processors run in declaration order on the playback thread, after format conversion. `Initialize` receives the processing sample rate and channel count and must clear prior state. Blocks contain complete interleaved frames; their size can vary. Process synchronously, avoid blocking/I/O or per-sample allocations, and do not retain the sample span. Each session needs its own processor instances. Chain membership and effect settings are fixed for the session; do not call `Reset` or `Initialize` concurrently with processing. An empty chain provides bypass.
+Processors run in declaration order on the playback thread, after format conversion. `Initialize` receives the processing sample rate and channel count and must clear prior state. Blocks contain complete interleaved frames; their size can vary. Process synchronously, avoid blocking/I/O or per-sample allocations, and do not retain the sample span. Each session needs its own processor instances. A plain `ProcessorChain` has fixed membership and settings; use `LiveProcessorChain.Replace` with fresh instances to publish changes during a session. Do not mutate processors or call `Reset` or `Initialize` concurrently with processing. An empty chain provides bypass.
 
 The library demo is **hard overdrive → reverb**. The CLI loads the requested JSON preset unless `--bypass` skips effects. The separate `DistortionProcessor` uses a tanh waveshaper and output gain. Reverb uses four parallel damped feedback combs per channel, with independent channel history and normalized wet gain. It is a basic algorithmic reverb, not convolution or a room simulation.
 
@@ -248,13 +256,15 @@ var overdriveChain = new ProcessorChain(
 
 ## Verification
 
-The xUnit suite uses simulated audio devices and checks DSP order, clipping, reverb decay/reset/channel isolation, PCM conversion, resampling, channel mapping, queue boundaries, lifecycle, and fault cleanup. It never opens physical audio devices. CLI help and enumeration can be checked without starting a stream.
+The xUnit suite uses simulated audio devices and checks DSP order, clipping, reverb decay/reset/channel isolation, PCM conversion, resampling, channel mapping, queue boundaries, lifecycle, and fault cleanup. It also checks live chain publication/crossfades, bypass, editor preset/layout validation, and persistent settings. It never opens physical audio devices. CLI help and enumeration can be checked without starting a stream. The [pedalboard checklist](Docs/Pedalboard.md#manual-verification) covers desktop interaction and hardware listening checks.
 
 For manual hardware verification, list devices, select each intended input/output combination, and run a short session with `--seconds 10` at low output volume. Check mono/stereo routing, ASIO channel offsets, Ctrl+C shutdown, and device disconnect handling. Hardware compatibility and audible latency require testing with the actual drivers; automated tests do not establish them.
 
 ## Current milestones
 
-- [ ] Create a UI project in Avalonia with configurable processors.
+- [x] Create a responsive Avalonia pedalboard with configurable processors and graphical connections.
+- [x] Edit, reorder, and bypass effects during playback.
+- [x] Save/load sound presets and separate board layouts; persist audio and workspace settings.
 - [ ] Add VST plugins support.
 - [ ] Add more effect processors.
 - [ ] Idk? learn a guitar finally.

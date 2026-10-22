@@ -1,4 +1,6 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using SharpAmp.Avalonia.ViewModels;
 using SharpAmp.Cli;
 using SharpAmp.Core.Dsp;
 using SharpAmp.Core.Dsp.Configuration;
@@ -18,9 +20,28 @@ public sealed class DocumentationTests
         Assert.NotEmpty(examples);
         foreach (var json in examples)
         {
-            var preset = ProcessorChainConfiguration.FromJson(json);
-            var original = ProcessorChain.FromJson(json);
-            var restored = ProcessorChain.FromJson(preset.ToJson());
+            using var document = JsonDocument.Parse(json);
+            ProcessorChain original;
+            ProcessorChain restored;
+            if (document.RootElement.TryGetProperty("version", out _))
+            {
+                // Desktop presets have a versioned envelope. Validate through the real editor
+                // loader and retain its metadata/bypass state as well as the compiled sound.
+                var board = new ProcessorChainViewModel();
+                board.LoadPresetJson(json);
+                var serialized = board.ToPresetJson();
+                var restoredBoard = new ProcessorChainViewModel();
+                restoredBoard.LoadPresetJson(serialized);
+                Assert.Equal(serialized, restoredBoard.ToPresetJson());
+                original = board.CreateChain();
+                restored = restoredBoard.CreateChain();
+            }
+            else
+            {
+                var preset = ProcessorChainConfiguration.FromJson(json);
+                original = ProcessorChain.FromJson(json);
+                restored = ProcessorChain.FromJson(preset.ToJson());
+            }
             original.Initialize(48000, 2);
             restored.Initialize(48000, 2);
             float[] first = [0.2f, -0.4f, 0.8f, 0.1f];

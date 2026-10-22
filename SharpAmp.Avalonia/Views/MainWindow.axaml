@@ -2,67 +2,43 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SharpAmp.Avalonia.ViewModels"
         xmlns:views="using:SharpAmp.Avalonia.Views"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SharpAmp.Avalonia.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel" x:CompileBindings="True"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="SharpAmp" Width="1000" Height="820" MinWidth="800" MinHeight="500">
-
-    <Window.Styles>
-        <Style Selector="Button.engine">
-            <Setter Property="Background" Value="#263B3C" />
-            <Setter Property="Foreground" Value="#9CEAD6" />
-            <Setter Property="BorderBrush" Value="#497A70" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="24" />
-            <Setter Property="Padding" Value="20,12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style Selector="Button.engine.running">
-            <Setter Property="Background" Value="#66D5BD" />
-            <Setter Property="Foreground" Value="#102A24" />
-        </Style>
-        <Style Selector="Button.engine:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#387465" />
-            <Setter Property="Foreground" Value="White" />
-        </Style>
-    </Window.Styles>
-
-    <Grid RowDefinitions="Auto,Auto,*" Background="{Binding $parent[Window].Background}">
-        <Border Background="#141B21" Padding="28,20">
+        Title="SharpAmp · Your sound, connected" Width="1380" Height="880" MinWidth="700" MinHeight="700">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <Border Background="#191E23" BorderBrush="#2C343B" BorderThickness="0,0,0,1" Padding="24,17">
             <Grid ColumnDefinitions="*,Auto">
-                <StackPanel VerticalAlignment="Center" Spacing="3">
-                    <TextBlock Text="SharpAmp" FontSize="26" FontWeight="Bold" Foreground="#F2F5F7" />
-                    <TextBlock Text="YOUR DESKTOP PEDALBOARD" FontSize="10" LetterSpacing="2" Foreground="#9DAFB9" />
-                </StackPanel>
-                <Button Grid.Column="1" Classes="engine" Classes.running="{Binding IsEngineRunning}"
-                        Command="{Binding ToggleEngineCommand}" VerticalAlignment="Center"
-                        AutomationProperties.Name="{Binding EngineButtonText}">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="⏻" FontSize="20" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding EngineButtonText}" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Border Background="#85E0BE" CornerRadius="9" Width="38" Height="38">
+                        <TextBlock Text="ϟ" Foreground="#10251D" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Spacing="1">
+                        <TextBlock Text="SharpAmp" FontSize="22" FontWeight="SemiBold" />
+                        <TextBlock Classes="eyebrow" Text="YOUR SOUND, CONNECTED" FontSize="9" />
                     </StackPanel>
-                </Button>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                    <ToggleSwitch IsChecked="{Binding IsChainBypassed, Mode=TwoWay}" Content="Bypass all" VerticalAlignment="Center"
+                                  ToolTip.Tip="Listen to your clean input without changing your effects." />
+                    <Button Classes="primary audio-toggle" Classes.running="{Binding IsEngineRunning}" Command="{Binding ToggleEngineCommand}"
+                            Content="{Binding EngineButtonText}" AutomationProperties.Name="{Binding EngineButtonText}" />
+                </StackPanel>
             </Grid>
         </Border>
-        <StackPanel Grid.Row="1" Margin="28,16" Spacing="8">
-            <TextBlock Text="{Binding EngineStatus}" TextWrapping="Wrap" />
-            <Border IsVisible="{Binding HasEngineError}" Background="#382425" CornerRadius="8" Padding="12">
+        <StackPanel Grid.Row="1" Margin="24,12,24,0" Spacing="8">
+            <Grid ColumnDefinitions="Auto,Auto,*">
+                <TextBlock Classes="muted engine-status" Classes.live="{Binding IsEngineRunning}"
+                           Text="{Binding EngineStatusLabel}" FontSize="12" />
+                <TextBlock Grid.Column="1" Classes="muted" Text=" · " FontSize="12" />
+                <TextBlock Grid.Column="2" Classes="muted" Text="{Binding EngineStatusDetail}" TextWrapping="Wrap" FontSize="12" />
+            </Grid>
+            <Border IsVisible="{Binding HasEngineError}" Background="#392526" CornerRadius="7" Padding="12">
                 <TextBlock Text="{Binding EngineError}" Foreground="#FFB4AB" TextWrapping="Wrap" />
             </Border>
         </StackPanel>
-        <TabControl Grid.Row="2" Margin="16,0,16,16" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
-            <TabItem Header="Processor chain">
-                <views:ProcessorChainView DataContext="{Binding ProcessorChain}" />
-            </TabItem>
-            <TabItem Header="Settings">
-                <ContentControl IsEnabled="{Binding CanEdit}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
-                    <views:SettingsView DataContext="{Binding Settings}" />
-                </ContentControl>
-            </TabItem>
+        <TabControl Grid.Row="2" Margin="16,4,16,16" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+            <TabItem Header="Pedalboard"><views:ProcessorChainView x:Name="Editor" DataContext="{Binding ProcessorChain}" /></TabItem>
+            <TabItem Header="Settings"><views:SettingsView DataContext="{Binding Settings}" /></TabItem>
         </TabControl>
     </Grid>
-
 </Window>

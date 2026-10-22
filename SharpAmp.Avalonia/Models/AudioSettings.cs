@@ -4,7 +4,7 @@ using SharpAmp.Core.Audio;
 
 namespace SharpAmp.Avalonia.Models;
 
-/// <summary>Editable settings retained for the lifetime of the main window.</summary>
+/// <summary>Editable audio configuration, persisted independently of effect presets.</summary>
 public partial class AudioSettings : ObservableObject
 {
     [ObservableProperty] private AudioBackend inputBackend = AudioBackend.Wasapi;
@@ -19,15 +19,14 @@ public partial class AudioSettings : ObservableObject
     [ObservableProperty] private int asioInputChannelOffset;
     [ObservableProperty] private int asioOutputChannelOffset;
 
-    public string? GetValidationError()
+    public string? GetValidationError(bool requireDevices = true)
     {
         if (!Enum.IsDefined(InputBackend) || !Enum.IsDefined(OutputBackend))
             return "Choose valid input and output backends.";
-        if (InputDevice is null || OutputDevice is null)
+        if (requireDevices && (InputDevice is null || OutputDevice is null))
             return "Choose an input device and an output device.";
-        if (InputDevice.Backend != InputBackend || InputDevice.Direction != AudioDirection.Input ||
-            OutputDevice.Backend != OutputBackend || OutputDevice.Direction != AudioDirection.Output ||
-            string.IsNullOrWhiteSpace(InputDevice.Id) || string.IsNullOrWhiteSpace(OutputDevice.Id))
+        if ((InputDevice is not null && (InputDevice.Backend != InputBackend || InputDevice.Direction != AudioDirection.Input || string.IsNullOrWhiteSpace(InputDevice.Id))) ||
+            (OutputDevice is not null && (OutputDevice.Backend != OutputBackend || OutputDevice.Direction != AudioDirection.Output || string.IsNullOrWhiteSpace(OutputDevice.Id))))
             return "Choose devices that match the selected backends and directions.";
         if (SampleRate is < 8000 or > 192000)
             return "Sample rate must be between 8,000 and 192,000 Hz.";
