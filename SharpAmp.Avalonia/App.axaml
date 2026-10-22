@@ -1,10 +1,163 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="SharpAmp.Avalonia.App"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-  
+             x:Class="SharpAmp.Avalonia.App" RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <!-- Dark marks keep mint-filled controls legible in every active state. -->
+        <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundChecked" Color="#10251D" />
+        <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" Color="#10251D" />
+        <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedPressed" Color="#10251D" />
+        <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundIndeterminate" Color="#10251D" />
+        <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundIndeterminatePointerOver" Color="#10251D" />
+        <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundIndeterminatePressed" Color="#10251D" />
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#10251D" />
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#10251D" />
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#10251D" />
+        <ControlTheme x:Key="SpacedScrollThumb" TargetType="Thumb">
+            <Setter Property="Background" Value="#56636D" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Margin="2" />
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:pointerover">
+                <Setter Property="Background" Value="#91A1AC" />
+            </Style>
+            <Style Selector="^:pressed">
+                <Setter Property="Background" Value="#85E0BE" />
+            </Style>
+        </ControlTheme>
+        <ControlTheme x:Key="SpacedScrollPageButton" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <ControlTemplate><Border Background="Transparent" /></ControlTemplate>
+            </Setter>
+        </ControlTheme>
+        <ControlTheme x:Key="SpacedScrollBar" TargetType="ScrollBar">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Track Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
+                           Value="{TemplateBinding Value, Mode=TwoWay}" ViewportSize="{TemplateBinding ViewportSize}"
+                           Orientation="{TemplateBinding Orientation}"
+                           DeferThumbDrag="{TemplateBinding ScrollViewer.IsDeferredScrollingEnabled}">
+                        <Track.DecreaseButton>
+                            <RepeatButton Name="PART_PageUpButton" Theme="{StaticResource SpacedScrollPageButton}"
+                                          AutomationProperties.Name="Scroll back one page" />
+                        </Track.DecreaseButton>
+                        <Track.IncreaseButton>
+                            <RepeatButton Name="PART_PageDownButton" Theme="{StaticResource SpacedScrollPageButton}"
+                                          AutomationProperties.Name="Scroll forward one page" />
+                        </Track.IncreaseButton>
+                        <Thumb Theme="{StaticResource SpacedScrollThumb}" AutomationProperties.Name="Scroll position" />
+                    </Track>
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:vertical">
+                <Setter Property="Width" Value="12" />
+            </Style>
+            <Style Selector="^:vertical /template/ Track">
+                <Setter Property="IsDirectionReversed" Value="True" />
+            </Style>
+            <Style Selector="^:vertical /template/ Thumb">
+                <Setter Property="MinHeight" Value="32" />
+            </Style>
+            <Style Selector="^:horizontal">
+                <Setter Property="Height" Value="12" />
+            </Style>
+            <Style Selector="^:horizontal /template/ Thumb">
+                <Setter Property="MinWidth" Value="32" />
+            </Style>
+        </ControlTheme>
+    </Application.Resources>
     <Application.Styles>
-        <FluentTheme />
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <ColorPaletteResources x:Key="Dark" Accent="#85E0BE" />
+            </FluentTheme.Palettes>
+        </FluentTheme>
+        <Style Selector="Window">
+            <Setter Property="Background" Value="#111417" />
+            <Setter Property="Foreground" Value="#EDF2F4" />
+            <Setter Property="FontFamily" Value="Inter, Segoe UI" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="MinHeight" Value="36" />
+        </Style>
+        <Style Selector="Button.quiet">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="#353E46" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#85E0BE" />
+            <Setter Property="Foreground" Value="#10251D" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.audio-toggle">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.audio-toggle:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#A4ECCE" />
+            <Setter Property="Foreground" Value="#10251D" />
+        </Style>
+        <Style Selector="Button.audio-toggle:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#67CAA5" />
+            <Setter Property="Foreground" Value="#10251D" />
+        </Style>
+        <Style Selector="Button.audio-toggle.running">
+            <Setter Property="Background" Value="#E87980" />
+            <Setter Property="Foreground" Value="#2B1013" />
+        </Style>
+        <Style Selector="Button.audio-toggle.running:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#F5959A" />
+            <Setter Property="Foreground" Value="#2B1013" />
+        </Style>
+        <Style Selector="Button.audio-toggle.running:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#D56069" />
+            <Setter Property="Foreground" Value="#2B1013" />
+        </Style>
+        <Style Selector="ScrollViewer.spaced-scroll">
+            <Setter Property="AllowAutoHide" Value="False" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <!-- Separate cells reserve the gutter in every pointer/focus state. -->
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
+                        <ScrollContentPresenter Name="PART_ContentPresenter"
+                                                Background="{TemplateBinding Background}"
+                                                Padding="{TemplateBinding Padding}"
+                                                Content="{TemplateBinding Content}"
+                                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        <ScrollBar Name="PART_VerticalScrollBar" Grid.Column="1" Orientation="Vertical"
+                                   Margin="8,0,0,0" Theme="{StaticResource SpacedScrollBar}" />
+                        <ScrollBar Name="PART_HorizontalScrollBar" Grid.Row="1" Orientation="Horizontal"
+                                   Margin="0,8,0,0" Theme="{StaticResource SpacedScrollBar}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="TextBlock.muted">
+            <Setter Property="Foreground" Value="#95A2AC" />
+        </Style>
+        <Style Selector="TextBlock.engine-status.live">
+            <Setter Property="Foreground" Value="#F18A90" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="TextBlock.eyebrow">
+            <Setter Property="Foreground" Value="#95A2AC" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="LetterSpacing" Value="1.6" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="TextBox"><Setter Property="CornerRadius" Value="6" /></Style>
+        <Style Selector="ToolTip"><Setter Property="MaxWidth" Value="300" /></Style>
     </Application.Styles>
 </Application>

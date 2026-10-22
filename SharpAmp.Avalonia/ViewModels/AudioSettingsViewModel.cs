@@ -64,6 +64,8 @@ public partial class AudioSettingsViewModel : SettingsPageViewModel
 
         // Keep explicit selections by stable ID; never silently switch to another device.
         var selected = previous is null ? null : devices.FirstOrDefault(device => device.Backend == previous.Backend && device.Id == previous.Id);
+        if (selected is null && previous is not null && previous.Backend == backend && message is null)
+            message = $"Your selected device ({previous.Name}) is unavailable. Reconnect it and refresh, or choose another device.";
         if (isInput)
         {
             InputDevices = devices;

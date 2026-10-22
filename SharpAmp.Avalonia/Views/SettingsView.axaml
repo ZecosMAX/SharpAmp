@@ -5,29 +5,67 @@
              x:Class="SharpAmp.Avalonia.Views.SettingsView"
              x:DataType="vm:SettingsViewModel"
              x:CompileBindings="True">
-    <UserControl.DataTemplates>
-        <!-- Register each new settings page here and add its view model to Pages. -->
-        <DataTemplate DataType="vm:AudioSettingsViewModel">
-            <views:AudioSettingsView />
-        </DataTemplate>
-    </UserControl.DataTemplates>
-    <Grid ColumnDefinitions="190,*">
-        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                BorderThickness="0,0,1,0" Padding="16,24">
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Text="Settings" FontSize="24" FontWeight="SemiBold" Margin="8,0,0,24" />
-                <ListBox ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage, Mode=TwoWay}"
-                         SelectionMode="AlwaysSelected" Background="Transparent"
-                         AutomationProperties.Name="Settings pages">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:SettingsPageViewModel">
-                            <TextBlock Text="{Binding Title}" Margin="8,6" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </DockPanel>
+    <UserControl.Styles>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="Foreground" Value="#95A2AC" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="Border.section">
+            <Setter Property="Background" Value="#191E23" />
+            <Setter Property="BorderBrush" Value="#303840" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="20" />
+        </Style>
+        <Style Selector="Button.save-settings">
+            <Setter Property="Background" Value="#85E0BE" />
+            <Setter Property="Foreground" Value="#10251D" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="TextBlock.persistence-error">
+            <Setter Property="Foreground" Value="#FFB4AB" />
+        </Style>
+    </UserControl.Styles>
+    <Grid RowDefinitions="*,Auto" Background="#111417">
+        <ScrollViewer Classes="spaced-scroll" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="24" Spacing="22" MaxWidth="900" HorizontalAlignment="Stretch">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Settings" Foreground="#EDF2F4" FontSize="28" FontWeight="SemiBold" />
+                    <TextBlock Classes="hint" Text="Make the workspace yours and connect your audio gear." />
+                </StackPanel>
+                <Border Classes="section">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Workspace" Foreground="#EDF2F4" FontSize="18" FontWeight="SemiBold" />
+                        <StackPanel Spacing="3">
+                            <CheckBox Content="Show helpful tips" IsChecked="{Binding Preferences.ShowHints, Mode=TwoWay}"
+                                      AutomationProperties.Name="Show helpful tips" />
+                            <TextBlock Classes="hint" Text="Keep short instructions visible while building your sound." Margin="30,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Spacing="3">
+                            <CheckBox Content="Snap blocks to the grid" IsChecked="{Binding Preferences.SnapToGrid, Mode=TwoWay}"
+                                      AutomationProperties.Name="Snap blocks to the grid" />
+                            <TextBlock Classes="hint" Text="Keep your board tidy as you move effects around." Margin="30,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Border Background="#20262C" CornerRadius="8" Padding="14" IsVisible="{Binding !IsAudioEditable}">
+                    <TextBlock Text="Audio is running. Stop audio to change devices or timing." Foreground="#85E0BE" TextWrapping="Wrap" />
+                </Border>
+                <Border IsEnabled="{Binding IsAudioEditable}">
+                    <views:AudioSettingsView DataContext="{Binding Audio}" />
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+        <Border Grid.Row="1" Background="#191E23" BorderBrush="#303840" BorderThickness="0,1,0,0" Padding="24,16">
+            <Grid ColumnDefinitions="*,Auto" MaxWidth="900">
+                <TextBlock Classes="hint" Classes.persistence-error="{Binding HasPersistenceError}"
+                           Text="{Binding PersistenceMessage}" Margin="0,0,20,0" VerticalAlignment="Center"
+                           AutomationProperties.LiveSetting="Polite" />
+                <Button Grid.Column="1" Classes="save-settings" Content="Save settings" Command="{Binding SaveCommand}"
+                        VerticalAlignment="Center" AutomationProperties.Name="Save settings on this device" />
+            </Grid>
         </Border>
-        <ContentControl Grid.Column="1" Content="{Binding SelectedPage}"
-                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
     </Grid>
 </UserControl>

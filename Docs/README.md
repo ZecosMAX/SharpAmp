@@ -1,6 +1,8 @@
 # SharpAmp documentation
 
-Start with [Creating and serializing presets](Presets.md) for the JSON format, loading instructions, effect order, and a complete example. Copy [Examples/custom-chain.json](Examples/custom-chain.json) to start your own chain, or [Examples/bypass.json](Examples/bypass.json) for an unprocessed signal.
+Start with the [desktop pedalboard guide](Pedalboard.md) to build and edit a sound visually, use keyboard controls, and save presets and layouts.
+
+For the CLI and library, see [Creating and serializing presets](Presets.md) for the JSON format, loading instructions, effect order, and a complete example. Copy [Examples/custom-chain.json](Examples/custom-chain.json) to start your own chain, or [Examples/bypass.json](Examples/bypass.json) for an unprocessed signal. The desktop imports this format and saves its own richer preset format.
 
 ## Effect reference
 
