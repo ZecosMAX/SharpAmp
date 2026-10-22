@@ -218,9 +218,45 @@ public partial class ProcessorChainView : UserControl
         if (await ConfirmDiscardAsync()) { Model?.NewBoard(); BoardScroll.Offset = default; }
     }
     private async void OnOpen(object? sender, RoutedEventArgs e) => await OpenAsync(false);
+    private async void OnAddVstFile(object? sender, RoutedEventArgs e) => await AddVstAsync(false);
+    private async void OnAddVstFolder(object? sender, RoutedEventArgs e) => await AddVstAsync(true);
     private async void OnSave(object? sender, RoutedEventArgs e) => await SaveAsync(false);
     private async void OnOpenLayout(object? sender, RoutedEventArgs e) => await OpenAsync(true);
     private async void OnSaveLayout(object? sender, RoutedEventArgs e) => await SaveAsync(true);
+
+    private async Task AddVstAsync(bool folder)
+    {
+        if (fileOperation || Model is not { } vm || TopLevel.GetTopLevel(this) is not { } top) return;
+        fileOperation = true;
+        try
+        {
+            IStorageItem? selected;
+            if (folder)
+            {
+                var folders = await top.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+                { Title = "Choose a .vst3 bundle folder", AllowMultiple = false });
+                selected = folders.FirstOrDefault();
+            }
+            else
+            {
+                var files = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "Choose a VST effect", AllowMultiple = false,
+                    FileTypeFilter = [new FilePickerFileType("VST effects") { Patterns = ["*.dll", "*.vst3"] }]
+                });
+                selected = files.FirstOrDefault();
+            }
+            using (selected)
+            {
+                if (selected is null) return;
+                var path = selected.TryGetLocalPath() ?? throw new InvalidOperationException("Choose a local plug-in.");
+                vm.AddVstEffect(path);
+                RevealSelection();
+            }
+        }
+        catch (Exception error) { vm.StatusMessage = $"Could not load plug-in: {error.Message}"; }
+        finally { fileOperation = false; }
+    }
 
     private async Task OpenAsync(bool layout)
     {

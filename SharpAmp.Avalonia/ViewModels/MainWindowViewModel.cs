@@ -144,6 +144,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private void StopSession()
     {
         var previous = session;
+        var previousChain = liveChain;
         session = null;
         liveChain = null;
         scheduledUpdateChain = null;
@@ -159,6 +160,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         }
         finally
         {
+            try { previousChain?.Dispose(); }
+            catch (Exception error) { EngineError ??= error.Message; }
             IsEngineRunning = false;
         }
     }

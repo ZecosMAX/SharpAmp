@@ -1,0 +1,81 @@
+{
+  "version": 2,
+  "name": "Aboba",
+  "processors": [
+    {
+      "id": "4ce579e73b4743c58bfc5f9423f1bf88",
+      "type": "gain",
+      "isBypassed": false,
+      "parameters": {
+        "gain": 1
+      }
+    },
+    {
+      "id": "0da9a7ac43124f94834ee974a813025f",
+      "type": "octaveFuzz",
+      "isBypassed": false,
+      "parameters": {
+        "drive": 5,
+        "outputGain": 0.35,
+        "wet": 1
+      }
+    },
+    {
+      "id": "47465c3839b94cb9b7c8acdb70ce59b8",
+      "type": "delay",
+      "isBypassed": false,
+      "parameters": {
+        "timeMs": 300,
+        "feedback": 0.35,
+        "wet": 0.25
+      }
+    },
+    {
+      "id": "4ce2a8ebe119426f85f83c5da81ecda7",
+      "type": "hardOverdrive",
+      "isBypassed": false,
+      "parameters": {
+        "drive": 5,
+        "outputGain": 0.35
+      }
+    },
+    {
+      "id": "274e79cb15d64116925173b7b9284a59",
+      "type": "distortion",
+      "isBypassed": false,
+      "parameters": {
+        "drive": 3,
+        "outputGain": 0.35,
+        "wet": 1
+      }
+    },
+    {
+      "id": "ffef47f739b24a71b0dd96c8662dea35",
+      "type": "octaveFuzz",
+      "isBypassed": false,
+      "parameters": {
+        "drive": 5,
+        "outputGain": 0.35,
+        "wet": 1
+      }
+    }
+  ],
+  "connections": [
+    {
+      "sourceId": "$input",
+      "targetId": "4ce579e73b4743c58bfc5f9423f1bf88"
+    },
+    {
+      "sourceId": "4ce579e73b4743c58bfc5f9423f1bf88",
+      "targetId": "47465c3839b94cb9b7c8acdb70ce59b8"
+    },
+    {
+      "sourceId": "47465c3839b94cb9b7c8acdb70ce59b8",
+      "targetId": "0da9a7ac43124f94834ee974a813025f"
+    },
+    {
+      "sourceId": "0da9a7ac43124f94834ee974a813025f",
+      "targetId": "$output"
+    }
+  ]
+}

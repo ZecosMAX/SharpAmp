@@ -36,3 +36,7 @@ dotnet run --project SharpAmp.Cli -- --help
 `run` requires `--chain PATH` unless `--bypass` is supplied. Bypass skips every effect and overrides any preset without reading its file. Input/output selection remains interactive unless indices are supplied. Paths are relative to the current working directory; absolute paths work too. Quote paths containing spaces or parentheses. `--help` lists audio options and the effect parameter reference; effect parameters belong inside JSON, not on the command line.
 
 For the six basic guitar and bass presets, device support, and library usage, see the [project README](../README.md).
+
+## VST plug-ins
+
+See the [VST effect guide](VstPlugins.md) for VST2/VST3 hosting, the pedalboard picker, preset fields, and programmatic runtime insertion.

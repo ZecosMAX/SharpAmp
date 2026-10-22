@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using SharpAmp.Core.Dsp;
 using SharpAmp.Core.Dsp.Configuration;
+using SharpAmp.Core.Dsp.Plugins;
 
 namespace SharpAmp.Avalonia.ViewModels;
 
@@ -103,6 +104,26 @@ public sealed class ProcessorChainViewModel : ViewModelBase
         return processor;
     }
 
+    /// <summary>Load a native effect on the control/UI thread and add an unconnected block.</summary>
+    public ProcessorViewModel AddVstEffect(string path)
+    {
+        if (!CanAddEffects) throw new InvalidOperationException($"A board can contain up to {MaxProcessors} effects.");
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        var format = path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar)
+            .EndsWith(".vst3", StringComparison.OrdinalIgnoreCase) ? VstPluginFormat.Vst3 : VstPluginFormat.Vst2;
+        using var probe = new VstPluginProcessor(path, format);
+        probe.Initialize(48000, 2);
+        var processor = ProcessorViewModel.CreateVst(new ProcessorConfiguration
+        {
+            Type = format == VstPluginFormat.Vst3 ? "vst3" : "vst2", PluginPath = probe.PluginPath
+        }, Guid.NewGuid().ToString("N"), probe.Name, probe.Parameters);
+        SetGridPosition(processor, Processors.Count, 3);
+        Processors.Add(processor);
+        SelectedProcessor = processor;
+        StatusMessage = $"Added {processor.Name}. Connect its input and output to use it.";
+        return processor;
+    }
+
     public bool RemoveSelected()
     {
         if (SelectedProcessor is not { } selected) return false;
@@ -122,6 +143,7 @@ public sealed class ProcessorChainViewModel : ViewModelBase
             selected.Parameters.Select(parameter => new ProcessorParameterViewModel(parameter.Key,
                 parameter.Name, parameter.Minimum, parameter.Maximum, parameter.Step, parameter.Value, parameter.Unit)).ToArray());
         duplicate.IsBypassed = selected.IsBypassed;
+        duplicate.PluginPath = selected.PluginPath;
         duplicate.X = selected.X + 24;
         duplicate.Y = selected.Y + 24;
         Processors.Insert(Processors.IndexOf(selected) + 1, duplicate);
@@ -209,6 +231,7 @@ public sealed class ProcessorChainViewModel : ViewModelBase
         {
             Id = processor.Id,
             Type = processor.Type,
+            PluginPath = processor.PluginPath,
             IsBypassed = processor.IsBypassed,
             Parameters = processor.ToConfiguration().Parameters
         }).ToList(),
@@ -236,11 +259,14 @@ public sealed class ProcessorChainViewModel : ViewModelBase
             var id = item.Id is null ? Guid.NewGuid().ToString("N") : ParseId(item.Id);
             if (!ids.Add(id)) throw new JsonException("Each effect must have a unique ID.");
             // Compile before creating controls: no invalid values are silently clamped, including bypassed effects.
-            ProcessorChain.FromConfiguration(new ProcessorChainConfiguration
+            var configuration = new ProcessorConfiguration { Type = item.Type, Parameters = item.Parameters, PluginPath = item.PluginPath };
+            using var validation = ProcessorChain.FromConfiguration(new ProcessorChainConfiguration
             {
-                Processors = [new ProcessorConfiguration { Type = item.Type, Parameters = item.Parameters }]
+                Processors = [configuration]
             });
-            var processor = EffectCatalog.Find(item.Type).Create(id, item.Parameters);
+            var processor = item.Type is "vst2" or "vst3"
+                ? ProcessorViewModel.CreateVst(configuration, id)
+                : EffectCatalog.Find(item.Type).Create(id, item.Parameters);
             processor.IsBypassed = item.IsBypassed;
             next.Add(processor);
         }

@@ -246,9 +246,8 @@ public sealed class MainWindowViewModelTests
 
         var oldSamples = Enumerable.Repeat(.1f, 2048).ToArray();
         var newSamples = (float[])oldSamples.Clone();
-        chains[0].Process(oldSamples);
+        Assert.Throws<ObjectDisposedException>(() => chains[0].Process(oldSamples));
         chains[1].Process(newSamples);
-        Assert.Equal(.1f, oldSamples[^1], 5);
         Assert.Equal(.3f, newSamples[^1], 5);
         Assert.True(vm.IsEngineRunning);
         Assert.Null(vm.EngineError);
@@ -276,8 +275,7 @@ public sealed class MainWindowViewModelTests
         await pending;
 
         var samples = Enumerable.Repeat(.1f, 2048).ToArray();
-        chain!.Process(samples);
-        Assert.Equal(.1f, samples[^1], 5);
+        Assert.Throws<ObjectDisposedException>(() => chain!.Process(samples));
         Assert.False(vm.IsEngineRunning);
         Assert.Null(vm.EngineError);
     }

@@ -12,13 +12,14 @@ public sealed class ProcessorParameterViewModel : ViewModelBase
     public double Maximum { get; }
     public double Step { get; }
     public string Unit { get; }
+    public string ValueFormat => Step < 0.01 ? "0.###" : "0.##";
 
     public string DisplayValue => Unit switch
     {
         "%" => (Value * 100).ToString("0.#", CultureInfo.CurrentCulture) + "%",
         "Hz" when Value >= 1000 => (Value / 1000).ToString("0.##", CultureInfo.CurrentCulture) + " kHz",
         "×" => Value.ToString("0.##", CultureInfo.CurrentCulture) + "×",
-        "" => Value.ToString("0.##", CultureInfo.CurrentCulture),
+        "" => Value.ToString(ValueFormat, CultureInfo.CurrentCulture),
         _ => Value.ToString("0.##", CultureInfo.CurrentCulture) + " " + Unit
     };
 

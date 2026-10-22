@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.Globalization;
 using SharpAmp.Core.Dsp.Configuration;
+using SharpAmp.Core.Dsp.Plugins;
 
 namespace SharpAmp.Avalonia.ViewModels;
 
@@ -19,6 +22,7 @@ public sealed class ProcessorViewModel : ViewModelBase
 
     public string Id { get; }
     public string Type { get; }
+    public string? PluginPath { get; internal set; }
     public string Name { get; }
     public string Description { get; }
     public string Category { get; }
@@ -74,6 +78,25 @@ public sealed class ProcessorViewModel : ViewModelBase
     public ProcessorConfiguration ToConfiguration() => new()
     {
         Type = Type,
+        PluginPath = PluginPath,
         Parameters = Parameters.ToDictionary(parameter => parameter.Key, parameter => (float)parameter.Value)
     };
+
+    internal static ProcessorViewModel CreateVst(ProcessorConfiguration configuration, string id,
+        string? name = null, IReadOnlyList<VstParameter>? definitions = null)
+    {
+        var parameters = definitions is null
+            ? configuration.Parameters.Select(pair => new ProcessorParameterViewModel(pair.Key,
+                $"Parameter {pair.Key}", 0, 1, 0.001, pair.Value)).ToArray()
+            : definitions.Select(parameter =>
+            {
+                var key = parameter.Id.ToString(CultureInfo.InvariantCulture);
+                return new ProcessorParameterViewModel(key, parameter.Name, 0, 1, 0.001,
+                    configuration.Parameters.GetValueOrDefault(key, parameter.DefaultValue));
+            }).ToArray();
+        return new ProcessorViewModel(configuration.Type,
+            name ?? Path.GetFileNameWithoutExtension(configuration.PluginPath) ?? "VST effect",
+            configuration.PluginPath ?? "VST effect", "VST plug-in", "#A99AE8", id, parameters)
+        { PluginPath = configuration.PluginPath };
+    }
 }
