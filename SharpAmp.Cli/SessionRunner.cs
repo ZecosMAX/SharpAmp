@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using SharpAmp.Core.Audio;
+using SharpAmp.Core.Dsp;
 
 namespace SharpAmp.Cli;
 
@@ -8,7 +9,8 @@ internal sealed class SessionRunner(TextWriter writer)
     public void Run(AudioSessionOptions sessionOptions, RunOptions options)
     {
         var chain = options.CreateProcessorChain();
-        using var session = new AudioSession(sessionOptions, chain);
+        using var liveChain = new LiveProcessorChain(chain);
+        using var session = new AudioSession(sessionOptions, liveChain);
         using var stop = new ManualResetEventSlim();
         ConsoleCancelEventHandler cancel = (_, e) =>
         {

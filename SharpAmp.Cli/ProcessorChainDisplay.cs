@@ -1,5 +1,6 @@
 using SharpAmp.Core.Dsp;
 using SharpAmp.Core.Dsp.Processors;
+using SharpAmp.Core.Dsp.Plugins;
 
 namespace SharpAmp.Cli;
 
@@ -20,6 +21,7 @@ internal static class ProcessorChainDisplay
 
     private static string Describe(IDigitalSignalProcessor processor) => processor switch
     {
+        VstPluginProcessor effect => $"{effect.Name} ({effect.Format}) — {effect.PluginPath}",
         GainProcessor effect => FormattableString.Invariant($"Gain — gain: {effect.Gain}"),
         HardOverdriveProcessor effect => FormattableString.Invariant(
             $"Hard overdrive — drive: {effect.Drive}, output gain: {effect.OutputGain}"),

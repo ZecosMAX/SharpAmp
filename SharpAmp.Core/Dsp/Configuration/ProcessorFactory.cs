@@ -1,4 +1,6 @@
 using SharpAmp.Core.Dsp.Processors;
+using SharpAmp.Core.Dsp.Plugins;
+using System.Globalization;
 
 namespace SharpAmp.Core.Dsp.Configuration;
 
@@ -10,12 +12,27 @@ internal static class ProcessorFactory
         if (configuration is null)
             throw new ArgumentException($"{context} must be an object.");
         if (string.IsNullOrWhiteSpace(configuration.Type))
-            throw new ArgumentException($"{context}.type must name a built-in effect.");
+            throw new ArgumentException($"{context}.type must name an effect.");
         if (configuration.Parameters is null)
             throw new ArgumentException($"{context}.parameters must be an object.");
 
         // Copy with a fixed comparer so programmatic and JSON presets use the same naming rules.
         var parameters = new Dictionary<string, float>(configuration.Parameters, StringComparer.Ordinal);
+        if (configuration.Type is "vst2" or "vst3")
+        {
+            var values = new Dictionary<uint, float>();
+            foreach (var (key, value) in parameters)
+            {
+                if (!uint.TryParse(key, NumberStyles.None, CultureInfo.InvariantCulture, out var id)
+                    || key != id.ToString(CultureInfo.InvariantCulture))
+                    throw new ArgumentException($"{context}.parameters: '{key}' must be a canonical unsigned parameter ID.");
+                values.Add(id, value);
+            }
+            return new VstPluginProcessor(configuration.PluginPath!,
+                configuration.Type == "vst2" ? VstPluginFormat.Vst2 : VstPluginFormat.Vst3, values);
+        }
+        if (configuration.PluginPath is not null)
+            throw new ArgumentException($"{context}.pluginPath is only valid for vst2/vst3 effects.");
         string[] allowed = configuration.Type switch
         {
             "gain" => ["gain"],

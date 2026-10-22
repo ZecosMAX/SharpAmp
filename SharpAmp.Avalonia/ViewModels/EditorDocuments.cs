@@ -32,6 +32,8 @@ internal sealed class EditorProcessorDocument
 {
     public string? Id { get; init; }
     public required string Type { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PluginPath { get; init; }
     public bool IsBypassed { get; init; }
     public Dictionary<string, float> Parameters { get; init; } = [];
 }

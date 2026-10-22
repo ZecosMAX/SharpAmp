@@ -112,6 +112,8 @@ Device indices can change after plugging devices in or restarting Windows. Libra
 
 ## Use the library
 
+VST2 and VST3 effects can be added from the pedalboard's **+ VST…** menu or programmatically with `RuntimeProcessorChain.AddVst(path)` during playback. See the [VST plug-in guide](Docs/VstPlugins.md) for runtime examples, presets, and compatibility limits.
+
 ```csharp
 using SharpAmp.Core.Audio;
 using SharpAmp.Core.Dsp;
@@ -139,7 +141,7 @@ if (await session.Completion is { } error)
 
 `AudioSession` owns the native capture/playback resources. It is single use: dispose it and create another session to change devices, format, or the processor instance supplied to its constructor. `Stop()` is idempotent and cuts the stream immediately, including the reverb tail. `Completion` returns `null` on a requested stop or an exception on failure; applications can await it to detect a disconnected device or failed processor. `DroppedInputFrames` reports capture queue overflow. Explicit disposal is required even after completion.
 
-For live effect changes, supply a `LiveProcessorChain` as the session's processor. After the session has started, call `Replace` with a fresh, independent `ProcessorChain` from the control thread. It initializes the replacement before publication and crossfades on the audio thread over 10 ms; a failed initialization leaves the playing chain intact. Replacement resets effect history, and rapid changes coalesce while a transition finishes. Set `IsBypassed` to crossfade between processed and clean input while continuing to process the effects. Do not reuse or mutate published processors, or call `Initialize` or `Reset` during playback.
+For live effect changes, supply a `LiveProcessorChain` as the session's processor. After the session has started, call `Replace` with a fresh, independent `ProcessorChain` from the control thread. It initializes the replacement before publication and crossfades on the audio thread over 10 ms; a failed initialization leaves the playing chain intact. Replacement resets effect history, and rapid changes coalesce while a transition finishes. Set `IsBypassed` to crossfade between processed and clean input while continuing to process the effects. Do not reuse or mutate published processors, or call `Initialize` or `Reset` during playback. Chains own disposable effects; dispose the session before disposing its chain. Retired live chains are released after their final audio use. `RuntimeProcessorChain` offers configuration-based `Add`, `AddVst`, `RemoveAt`, and `ReplaceAt` methods on top of this behavior.
 
 Input and output can use different backends, for example ASIO input to WASAPI output. No default device is silently substituted when a selected device fails.
 
@@ -265,7 +267,7 @@ For manual hardware verification, list devices, select each intended input/outpu
 - [x] Create a responsive Avalonia pedalboard with configurable processors and graphical connections.
 - [x] Edit, reorder, and bypass effects during playback.
 - [x] Save/load sound presets and separate board layouts; persist audio and workspace settings.
-- [ ] Add VST plugins support.
+- [x] Add VST2/VST3 audio effects and programmatic runtime insertion.
 - [ ] Add more effect processors.
 - [ ] Idk? learn a guitar finally.
 

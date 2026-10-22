@@ -29,6 +29,14 @@
                 <TextBlock x:Name="BoardHint" Grid.Column="2" Classes="muted" Text="{Binding RoutingSummary}" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap" />
             </Grid>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Classes="quiet" Content="+ VST…" IsEnabled="{Binding CanAddEffects}" ToolTip.Tip="Add a VST2 or VST3 effect plug-in.">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuItem Header="Choose plug-in file (.dll / .vst3)…" Click="OnAddVstFile" />
+                            <MenuItem Header="Choose VST3 bundle folder…" Click="OnAddVstFolder" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
                 <Button Classes="quiet" Content="Arrange" Click="OnArrange" ToolTip.Tip="Neatly arrange the cards in processing order." />
                 <Button Classes="quiet" Content="Layout ▾" ToolTip.Tip="Save or restore card positions independently of your sound.">
                     <Button.Flyout>
@@ -99,27 +107,33 @@
                             <TextBlock Text="{Binding SelectedProcessor.Description}" Classes="muted" TextWrapping="Wrap" FontSize="12" />
                             <TextBlock Text="{Binding SelectedProcessor.ConnectionLabel}" Foreground="#B6C9C1" FontSize="12" TextWrapping="Wrap" />
                         </StackPanel>
-                        <ScrollViewer Grid.Row="1" Classes="spaced-scroll" VerticalScrollBarVisibility="Auto">
-                            <StackPanel Spacing="12">
-                                <ToggleSwitch IsChecked="{Binding SelectedProcessor.IsBypassed, Mode=TwoWay}" Content="Bypass effect" />
-                                <ItemsControl ItemsSource="{Binding SelectedProcessor.Parameters}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:ProcessorParameterViewModel">
-                                            <StackPanel Spacing="5" Margin="0,0,0,18">
-                                                <Grid ColumnDefinitions="*,Auto">
-                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayValue}" Foreground="#85E0BE" FontSize="12" VerticalAlignment="Center" />
-                                                </Grid>
-                                                <Slider Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" SmallChange="{Binding Step}" TickFrequency="{Binding Step}"
-                                                        Value="{Binding Value, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}" />
-                                                <NumericUpDown Value="{Binding Value, Mode=TwoWay}" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Increment="{Binding Step}"
-                                                               FormatString="0.##" AutomationProperties.Name="{Binding Name, StringFormat='{}{0} exact value'}" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </ScrollViewer>
+                        <Grid Grid.Row="1" RowDefinitions="Auto,*" RowSpacing="12">
+                            <ToggleSwitch IsChecked="{Binding SelectedProcessor.IsBypassed, Mode=TwoWay}" Content="Bypass effect" />
+                            <ListBox Grid.Row="1" ItemsSource="{Binding SelectedProcessor.Parameters}"
+                                     Background="Transparent" BorderThickness="0" Padding="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ProcessorParameterViewModel">
+                                        <StackPanel Spacing="5" Margin="0,0,0,18">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplayValue}" Foreground="#85E0BE" FontSize="12" VerticalAlignment="Center" />
+                                            </Grid>
+                                            <Slider Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" SmallChange="{Binding Step}" TickFrequency="{Binding Step}"
+                                                    Value="{Binding Value, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}" />
+                                            <NumericUpDown Value="{Binding Value, Mode=TwoWay}" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Increment="{Binding Step}"
+                                                           FormatString="{Binding ValueFormat}" AutomationProperties.Name="{Binding Name, StringFormat='{}{0} exact value'}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
                         <StackPanel Grid.Row="2" Spacing="8">
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="6" IsEnabled="{Binding SelectedProcessor.IsInSignalPath}">
                                 <Button Classes="quiet" Content="← Earlier" Click="OnEarlier" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" ToolTip.Tip="Move one step earlier in the sound chain. Alt+Left on a card." />

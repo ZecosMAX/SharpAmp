@@ -38,6 +38,7 @@ internal static class HelpText
           bitcrusher     bits (8; integer 2..16), downsample (4; integer 1..64), wet (1; 0..1)
           octaveFuzz     drive (5; >0), outputGain (0.35; 0..1), wet (1; 0..1)
           ringModulator  frequencyHz (440; 0..20000), wet (0.5; 0..1)
+          vst2 / vst3    pluginPath (absolute .dll / .vst3 path); parameters use numeric IDs (0..1)
 
         Names are case-sensitive. Values must be finite numbers, not strings.
         Omitted parameters use defaults. Effects run in array order; duplicates are allowed.
@@ -45,6 +46,7 @@ internal static class HelpText
         Bypass preset:  {"processors":[]}
         Save a preset as a .json file and pass its path to --chain.
         See Docs/README.md for effect references and Docs/Presets.md for the JSON format.
+        See Docs/VstPlugins.md for VST compatibility and runtime insertion from C#.
 
         DX means DirectSound. Hardware must support the selected format/channel count.
         Use headphones and start with a low output volume to avoid acoustic feedback.
